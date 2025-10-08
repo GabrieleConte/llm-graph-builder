@@ -619,7 +619,7 @@ async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, passwor
         allowedRelationship = "Photo,SOURCE_APP,App,Photo,CREATION_DATE,Date,Photo,CREATION_TIME,Time,Photo,TAKEN_IN,Location,Photo,HAS_PATH,Path"
 
     elif "doc_" in file_name:
-        allowedNodes = "App,Document,Date,Time,Path"
+        allowedNodes = "App,Doc,Date,Time,Path"
         allowedRelationship = "Doc,SOURCE_APP,App,Doc,CREATION_DATE,Date,Doc,CREATION_TIME,Time,Doc,DATE_MODIFIED,Date,Doc,TIME_MODIFIED,Time,Doc,HAS_PATH,Path"
 
     start_entity_extraction = time.time()
