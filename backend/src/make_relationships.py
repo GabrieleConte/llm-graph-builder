@@ -3,7 +3,6 @@ from langchain.docstore.document import Document
 from src.shared.common_fn import load_embedding_model, execute_graph_query
 import logging
 from typing import List
-import os
 import hashlib
 import time
 from langchain_neo4j import Neo4jVector

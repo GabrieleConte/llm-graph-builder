@@ -6,7 +6,6 @@ from src.shared.constants import (QUERY_TO_GET_CHUNKS,
                                   START_FROM_LAST_PROCESSED_POSITION,
                                   DELETE_ENTITIES_AND_START_FROM_BEGINNING,
                                   QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
-from src.shared.schema_extraction import schema_extraction_from_text
 from dotenv import load_dotenv
 from datetime import datetime
 from src.create_chunks import CreateChunksofDocument
@@ -16,10 +15,7 @@ from src.source_node import sourceNode
 from src.llm import get_graph_from_llm
 from src.shared.common_fn import *
 from src.make_relationships import *
-from src.graph_query import get_graphDB_driver
 import warnings
-import shutil
-import json
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from langchain.docstore.document import Document
 

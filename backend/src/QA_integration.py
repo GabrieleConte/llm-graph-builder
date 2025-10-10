@@ -13,23 +13,11 @@ from langchain.retrievers.document_compressors import EmbeddingsFilter, Document
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage
 from langchain_core.callbacks import BaseCallbackHandler
-
-# LangChain chat models
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
-from langchain_google_vertexai import ChatVertexAI
-from langchain_groq import ChatGroq
-from langchain_anthropic import ChatAnthropic
-from langchain_fireworks import ChatFireworks
-from langchain_aws import ChatBedrock
-from langchain_community.chat_models import ChatOllama
-
-# Local imports
 from src.llm import get_llm
 from src.shared.common_fn import load_embedding_model
 from src.shared.constants import *
 
 load_dotenv()
-
 
 EMBEDDING_FUNCTION, _ = load_embedding_model()
 
@@ -258,7 +246,7 @@ def get_neo4j_retriever(graph, document_names, chat_mode_settings, score_thresho
 
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
         search_k = chat_mode_settings["top_k"]
-        ef_ratio = 5    # EFFECTIVE SEARCH RATIO
+        ef_ratio = 5  # EFFECTIVE SEARCH RATIO
         retriever = create_retriever(neo_db, document_names, chat_mode_settings, search_k, score_threshold, ef_ratio)
         return retriever
     except Exception as e:
@@ -327,6 +315,7 @@ def QA_RAG(graph, model_env_value, model_name, history, question, document_names
     chat_mode_settings = get_chat_mode_settings(mode=mode)
     document_names = list(map(str.strip, json.loads(document_names)))
 
-    result = process_chat_response(messages, question, model_env_value, model_name, graph, document_names, chat_mode_settings)
+    result = process_chat_response(messages, question, model_env_value, model_name, graph, document_names,
+                                   chat_mode_settings)
 
     return result

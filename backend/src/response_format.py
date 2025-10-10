@@ -1,6 +1,5 @@
-
 def create_response(status, success_count=None, failed_count=None, data=None, error=None, message=None,
-                        file_source=None, file_name=None):
+                    file_source=None, file_name=None):
     """
     This is a helper function to create a JSON response.
 
