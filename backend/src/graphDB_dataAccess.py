@@ -361,14 +361,12 @@ class graphDBdataAccess:
         param = {"filename_list": filename_list, "source_types_list": source_types_list}
         community_param = {"max_level": MAX_COMMUNITY_LEVELS}
         if deleteEntities == "true":
-            result = self.execute_query(query_to_delete_document_and_entities, param)
+            _ = self.execute_query(query_to_delete_document_and_entities, param)
             _ = self.execute_query(query_to_delete_communities, community_param)
-            logging.info(
-                f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
+            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
         else:
-            result = self.execute_query(query_to_delete_document, param)
-            logging.info(
-                f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
+            _ = self.execute_query(query_to_delete_document, param)
+            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
         return len(filename_list)
 
     def list_unconnected_nodes(self):

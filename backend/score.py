@@ -1,5 +1,4 @@
 import os
-
 from src.main import *
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.graphDB_dataAccess import graphDBdataAccess
@@ -18,7 +17,6 @@ from src.post_processing import create_entity_embedding, create_vector_fulltext_
 load_dotenv(override=True)
 
 logger = CustomLogger()
-CHUNK_DIR = os.path.join(os.path.dirname(__file__), "chunks")
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
 
@@ -50,12 +48,16 @@ def compute_entity_embeddings(
         password: str = "password",
         database: str = "neo4j",
 ):
+    """
+    Computes embeddings for entities w/o one in the graph database.
+    """
     graph = create_graph_database_connection(uri, userName, password, database)
     graphDBdataAccess(graph)
 
     create_entity_embedding(graph)
 
-# Function to extract knowledge graph from a local file
+
+# Function to extract KG from a local file
 async def extract_knowledge_graph_from_file(
         uri: str = "bolt://localhost:7687",
         userName: str = "neo4j",
