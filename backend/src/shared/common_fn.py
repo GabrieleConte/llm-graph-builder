@@ -29,7 +29,7 @@ def load_embedding_model():
     )
     dimension = 1024
     logging.info(f"Embedding: Using Langchain HuggingFaceEmbeddings , Dimension:{dimension}")
-    return embeddings, dimension
+    return embeddings
 
 
 def save_graphDocuments_in_neo4j(graph: Neo4jGraph, graph_document_list: List[GraphDocument], max_retries=3, delay=1):

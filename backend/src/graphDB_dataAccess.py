@@ -2,7 +2,6 @@ import logging
 import os
 import time
 
-from huggingface_hub import duplicate_space
 from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import delete_uploaded_local_file, load_embedding_model
@@ -135,24 +134,6 @@ class graphDBdataAccess:
             self.update_exception_db(self, self.file_name, error_message)
             raise Exception(error_message)
 
-    def get_source_list(self):
-        """
-        Args:
-            uri: URI of the graph to extract
-            db_name: db_name is database name to connect to graph db
-            userName: Username to use for graph creation ( if None will use username from config file )
-            password: Password to use for graph creation ( if None will use password from config file )
-            file: File object containing the PDF file to be used
-            model: Type of model to use ('Diffbot'or'OpenAI GPT')
-        Returns:
-        Returns a list of sources that are in the database by querying the graph and
-        sorting the list by the last updated date. 
-        """
-        logging.info("Get existing files list from graph")
-        query = "MATCH(d:Document) WHERE d.fileName IS NOT NULL RETURN d ORDER BY d.updatedAt DESC"
-        result = self.graph.query(query, session_params={"database": self.graph._database})
-        list_of_json_objects = [entry['d'] for entry in result]
-        return list_of_json_objects
 
     def update_KNN_graph(self):
         """
@@ -369,45 +350,15 @@ class graphDBdataAccess:
             _ = self.execute_query(query_to_delete_document, param)
         return len(filename_list)
 
-    def list_unconnected_nodes(self):
-        query = """
-        MATCH (e:!Chunk&!Document&!`__Community__`) 
-        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`) }
-        OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
-        RETURN 
-        e {
-            .*,
-            embedding: null,
-            elementId: elementId(e),
-            labels: CASE 
-            WHEN size(labels(e)) > 1 THEN 
-                apoc.coll.removeAll(labels(e), ["__Entity__"])
-            ELSE 
-                ["Entity"]
-            END
-        } AS e, 
-        collect(distinct doc.fileName) AS documents, 
-        count(distinct c) AS chunkConnections
-        ORDER BY e.id ASC
-        LIMIT 100
-        """
-        query_total_nodes = """
-        MATCH (e:!Chunk&!Document&!`__Community__`) 
-        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`) }
-        RETURN count(*) as total
-        """
-        nodes_list = self.execute_query(query)
-        total_nodes = self.execute_query(query_total_nodes)
-        return nodes_list, total_nodes[0]
 
-    def delete_unconnected_nodes(self, unconnected_entities_list):
-        entities_list = list(map(str.strip, json.loads(unconnected_entities_list)))
+    def delete_unconnected_nodes(self):
+        logging.info(f"Deleting unconnected nodes from database")
         query = """
-        MATCH (e) WHERE elementId(e) IN $elementIds
-        DETACH DELETE e
-        """
-        param = {"elementIds": entities_list}
-        return self.execute_query(query, param)
+            MATCH (n)
+            WHERE NOT (n)--()
+            DELETE n
+            """
+        self.execute_query(query)
 
     def get_duplicate_nodes_list(self):
         duplicate_score_value = 0.97
@@ -481,26 +432,6 @@ class graphDBdataAccess:
         param = {"rows": nodes_list}
         return self.execute_query(query, param)
 
-    def drop_create_vector_index(self, isVectorIndexExist):
-        """
-        drop and create the vector index when vector index dimesion are different.
-        """
-        embeddings, dimension = load_embedding_model()
-
-        if isVectorIndexExist == 'true':
-            self.graph.query("""drop index vector""", session_params={"database": self.graph._database})
-
-        self.graph.query("""CREATE VECTOR INDEX `vector` if not exists for (c:Chunk) on (c.embedding)
-                            OPTIONS {indexConfig: {
-                            `vector.dimensions`: $dimensions,
-                            `vector.similarity_function`: 'cosine'
-                            }}
-                        """,
-                         {
-                             "dimensions": dimension
-                         }, session_params={"database": self.graph._database}
-                         )
-        return "Drop and Re-Create vector index succesfully"
 
     def update_node_relationship_count(self, document_name):
         logging.info("updating node and relationship count")
@@ -563,38 +494,3 @@ class graphDBdataAccess:
                                       }
 
         return response
-
-    def get_nodelabels_relationships(self):
-        node_query = """
-                    CALL db.labels() YIELD label
-                    WITH label
-                    WHERE NOT label IN ['Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__']
-                    CALL apoc.cypher.run("MATCH (n:`" + label + "`) RETURN count(n) AS count",{}) YIELD value
-                    WHERE value.count > 0
-                    RETURN label order by label
-                    """
-
-        relation_query = """
-                CALL db.relationshipTypes() yield relationshipType
-                WHERE NOT relationshipType  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_','FIRST_CHUNK','SIMILAR','IN_COMMUNITY','PARENT_COMMUNITY'] 
-                return relationshipType order by relationshipType
-                """
-
-        try:
-            node_result = self.execute_query(node_query)
-            node_labels = [record["label"] for record in node_result]
-            relationship_result = self.execute_query(relation_query)
-            relationship_types = [record["relationshipType"] for record in relationship_result]
-            return node_labels, relationship_types
-        except Exception as e:
-            print(f"Error in getting node labels/relationship types from db: {e}")
-            return []
-
-    def get_websource_url(self, file_name):
-        logging.info("Checking if same title with different URL exist in db ")
-        query = """
-                MATCH(d:Document {fileName : $file_name}) WHERE d.fileSource = "web-url" 
-                RETURN d.url AS url
-                """
-        param = {"file_name": file_name}
-        return self.execute_query(query, param)

@@ -1,9 +1,5 @@
-BUCKET_UPLOAD = 'llm-graph-builder-upload'
-BUCKET_FAILED_FILE = 'llm-graph-builder-failed'
 GRAPH_CHUNK_LIMIT = 50
 
-
-#query 
 GRAPH_QUERY = """
 MATCH docs = (d:Document) 
 WHERE d.fileName IN $document_names
@@ -243,7 +239,6 @@ RETURN
 """
 
 ## CHAT SETUP
-CHAT_MAX_TOKENS = 1000
 CHAT_SEARCH_KWARG_SCORE_THRESHOLD = 0.5
 CHAT_DOC_SPLIT_SIZE = 3000
 CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD = 0.3  #parameter to filter out low score chunks from vector search results
@@ -371,66 +366,6 @@ VECTOR_GRAPH_SEARCH_ENTITY_QUERY = """
             }}
     END AS paths, e
 """
-
-# VECTOR_GRAPH_SEARCH_QUERY_SUFFIX = """
-#     WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT paths))) AS paths, 
-#          collect(DISTINCT e) AS entities
-
-#     // De-duplicate nodes and relationships across chunks
-#     RETURN 
-#         collect {
-#             UNWIND paths AS p 
-#             UNWIND relationships(p) AS r 
-#             RETURN DISTINCT r
-#         } AS rels,
-#         collect {
-#             UNWIND paths AS p 
-#             UNWIND nodes(p) AS n 
-#             RETURN DISTINCT n
-#         } AS nodes, 
-#         entities
-# }
-
-# // Generate metadata and text components for chunks, nodes, and relationships
-# WITH d, avg_score,
-#      [c IN chunks | c.chunk.text] AS texts, 
-#      [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,
-#      [n IN nodes | elementId(n)] AS entityIds,
-#      [r IN rels | elementId(r)] AS relIds,
-#      apoc.coll.sort([
-#          n IN nodes | 
-#          coalesce(apoc.coll.removeAll(labels(n), ['__Entity__'])[0], "") + ":" + 
-#          n.id + 
-#          (CASE WHEN n.description IS NOT NULL THEN " (" + n.description + ")" ELSE "" END)
-#      ]) AS nodeTexts,
-#      apoc.coll.sort([
-#          r IN rels | 
-#          coalesce(apoc.coll.removeAll(labels(startNode(r)), ['__Entity__'])[0], "") + ":" + 
-#          startNode(r).id + " " + type(r) + " " + 
-#          coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" + endNode(r).id
-#      ]) AS relTexts,
-#      entities
-
-# // Combine texts into response text
-# WITH d, avg_score, chunkdetails, entityIds, relIds,
-#      "Text Content:\n" + apoc.text.join(texts, "\n----\n") +
-#      "\n----\nEntities:\n" + apoc.text.join(nodeTexts, "\n") +
-#      "\n----\nRelationships:\n" + apoc.text.join(relTexts, "\n") AS text, 
-#      entities
-
-# RETURN 
-#     text, 
-#     avg_score AS score, 
-#     {
-#         length: size(text), 
-#         source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), 
-#         chunkdetails: chunkdetails, 
-#         entities : {
-#             entityids: entityIds, 
-#             relationshipids: relIds
-#         }
-#     } AS metadata
-# """
 
 VECTOR_GRAPH_SEARCH_QUERY_SUFFIX = """
    WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT paths))) AS paths,
@@ -823,64 +758,6 @@ QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT = """
 START_FROM_BEGINNING = "start_from_beginning"
 DELETE_ENTITIES_AND_START_FROM_BEGINNING = "delete_entities_and_start_from_beginning"
 START_FROM_LAST_PROCESSED_POSITION = "start_from_last_processed_position"
-
-GRAPH_CLEANUP_PROMPT = """
-You are tasked with organizing a list of types into semantic categories based on their meanings, including synonyms or morphological similarities. The input will include two separate lists: one for **Node Labels** and one for **Relationship Types**. Follow these rules strictly:
-### 1. Input Format
-The input will include two keys:
-- `nodes`: A list of node labels.
-- `relationships`: A list of relationship types.
-### 2. Grouping Rules
-- Group similar items into **semantic categories** based on their meaning or morphological similarities.
-- The name of each category must be chosen from the types in the input list (node labels or relationship types). **Do not create or infer new names for categories**.
-- Items that cannot be grouped must remain in their own category.
-### 3. Naming Rules
-- The category name must reflect the grouped items and must be an existing type in the input list.
-- Use a widely applicable type as the category name.
-- **Do not introduce new names or types** under any circumstances.
-### 4. Output Rules
-- Return the output as a JSON object with two keys:
- - `nodes`: A dictionary where each key represents a category name for nodes, and its value is a list of original node labels in that category.
- - `relationships`: A dictionary where each key represents a category name for relationships, and its value is a list of original relationship types in that category.
-- Every key and value must come from the provided input lists.
-### 5. Examples
-#### Example 1:
-Input:
-{{
- "nodes": ["Person", "Human", "People", "Company", "Organization", "Product"],
- "relationships": ["CREATED_FOR", "CREATED_TO", "CREATED", "PUBLISHED","PUBLISHED_BY", "PUBLISHED_IN", "PUBLISHED_ON"]
-}}
-Output in JSON:
-{{
- "nodes": {{
-   "Person": ["Person", "Human", "People"],
-   "Organization": ["Company", "Organization"],
-   "Product": ["Product"]
- }},
- "relationships": {{
-   "CREATED": ["CREATED_FOR", "CREATED_TO", "CREATED"],
-   "PUBLISHED": ["PUBLISHED_BY", "PUBLISHED_IN", "PUBLISHED_ON"]
- }}
-}}
-#### Example 2: Avoid redundant or incorrect grouping
-Input:
-{{
- "nodes": ["Process", "Process_Step", "Step", "Procedure", "Method", "Natural Process", "Step"],
- "relationships": ["USED_FOR", "USED_BY", "USED_WITH", "USED_IN"]
-}}
-Output:
-{{
- "nodes": {{
-   "Process": ["Process", "Process_Step", "Step", "Procedure", "Method", "Natural Process"]
- }},
- "relationships": {{
-   "USED": ["USED_FOR", "USED_BY", "USED_WITH", "USED_IN"]
- }}
-}}
-### 6. Key Rule
-If any item cannot be grouped, it must remain in its own category using its original name. Do not repeat values or create incorrect mappings.
-Use these rules to group and name categories accurately without introducing errors or new types.
-"""
 
 ADDITIONAL_INSTRUCTIONS = """Also take the numerical values and time or dates into account and, if necessary, create dedicated entities."""
 

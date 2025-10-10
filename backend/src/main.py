@@ -1,13 +1,11 @@
-import os
-
 from src.shared.constants import (QUERY_TO_GET_CHUNKS,
-                              QUERY_TO_DELETE_EXISTING_ENTITIES,
-                              QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
-                              QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
-                              START_FROM_BEGINNING,
-                              START_FROM_LAST_PROCESSED_POSITION,
-                              DELETE_ENTITIES_AND_START_FROM_BEGINNING,
-                              QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
+                                  QUERY_TO_DELETE_EXISTING_ENTITIES,
+                                  QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
+                                  QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
+                                  START_FROM_BEGINNING,
+                                  START_FROM_LAST_PROCESSED_POSITION,
+                                  DELETE_ENTITIES_AND_START_FROM_BEGINNING,
+                                  QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
 from src.shared.schema_extraction import schema_extraction_from_text
 from dotenv import load_dotenv
 from datetime import datetime
@@ -29,9 +27,12 @@ warnings.filterwarnings("ignore")
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s', level='INFO')
 
-async def extract_graph_from_file_local_file(uri, userName, password, database, model_env_value, model_name, merged_file_path, fileName,
+
+async def extract_graph_from_file_local_file(uri, userName, password, database, model_env_value, model_name,
+                                             merged_file_path, fileName,
                                              allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap,
-                                             chunks_to_combine, max_token_chunk_size, words_for_big_file, retry_condition,
+                                             chunks_to_combine, max_token_chunk_size, words_for_big_file,
+                                             retry_condition,
                                              additional_instructions):
     logging.info(f'Process file name :{fileName}')
 
@@ -39,23 +40,31 @@ async def extract_graph_from_file_local_file(uri, userName, password, database, 
         file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path, fileName)
 
         total_file_words = sum(len(p.page_content.split()) for p in pages)
-        big_file = (total_file_words > words_for_big_file)      # True if the file is considered big (do not perform entity extraction)
+        big_file = (
+                    total_file_words > words_for_big_file)  # True if the file is considered big (do not perform entity extraction)
 
         if pages == None or len(pages) == 0:
             raise LLMGraphBuilderException(f'File content is not available for file : {file_name}')
-        return await processing_source(uri, userName, password, database, model_env_value, model_name, file_name, pages, allowedNodes,
-                                       allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, max_token_chunk_size,
-                                       True, merged_file_path=merged_file_path, retry_condition=retry_condition, additional_instructions=additional_instructions,
+        return await processing_source(uri, userName, password, database, model_env_value, model_name, file_name, pages,
+                                       allowedNodes,
+                                       allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine,
+                                       max_token_chunk_size,
+                                       True, merged_file_path=merged_file_path, retry_condition=retry_condition,
+                                       additional_instructions=additional_instructions,
                                        big_file=big_file)
     else:
-        return await processing_source(uri, userName, password, database, model_env_value, model_name, fileName, [], allowedNodes,
-                                       allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, max_token_chunk_size,
+        return await processing_source(uri, userName, password, database, model_env_value, model_name, fileName, [],
+                                       allowedNodes,
+                                       allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine,
+                                       max_token_chunk_size,
                                        True, merged_file_path=merged_file_path, retry_condition=retry_condition,
                                        additional_instructions=additional_instructions, big_file=False)
 
 
-async def processing_source(uri, userName, password, database, model_env_value, model_name, file_name, pages, allowedNodes,
-                            allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine, max_token_chunk_size,
+async def processing_source(uri, userName, password, database, model_env_value, model_name, file_name, pages,
+                            allowedNodes,
+                            allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine,
+                            max_token_chunk_size,
                             is_uploaded_from_local=None, merged_file_path=None, retry_condition=None,
                             additional_instructions=None, big_file=False):
     """
@@ -77,31 +86,34 @@ async def processing_source(uri, userName, password, database, model_env_value, 
     response = {}
     start_time = datetime.now()
     processing_source_start_time = time.time()
-    
+
     start_create_connection = time.time()
     graph = create_graph_database_connection(uri, userName, password, database)
     end_create_connection = time.time()
-    
+
     elapsed_create_connection = end_create_connection - start_create_connection
     logging.info(f'Time taken database connection: {elapsed_create_connection:.2f} seconds')
     uri_latency["create_connection"] = f'{elapsed_create_connection:.2f}'
     graphDb_data_Access = graphDBdataAccess(graph)
 
     create_chunk_vector_index(graph)
-    
+
     start_get_chunkId_chunkDoc_list = time.time()
-    total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_overlap, max_token_chunk_size, retry_condition)
+    total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size,
+                                                                    chunk_overlap, max_token_chunk_size,
+                                                                    retry_condition)
     end_get_chunkId_chunkDoc_list = time.time()
-    
+
     elapsed_get_chunkId_chunkDoc_list = end_get_chunkId_chunkDoc_list - start_get_chunkId_chunkDoc_list
-    logging.info(f'Time taken to create list chunkids with chunk document: {elapsed_get_chunkId_chunkDoc_list:.2f} seconds')
+    logging.info(
+        f'Time taken to create list chunkids with chunk document: {elapsed_get_chunkId_chunkDoc_list:.2f} seconds')
     uri_latency["create_list_chunk_and_document"] = f'{elapsed_get_chunkId_chunkDoc_list:.2f}'
     uri_latency["total_chunks"] = total_chunks
 
     start_status_document_node = time.time()
     result = graphDb_data_Access.get_current_status_document_node(file_name)
     end_status_document_node = time.time()
-    
+
     elapsed_status_document_node = end_status_document_node - start_status_document_node
     logging.info(f'Time taken to get the current status of document node: {elapsed_status_document_node:.2f} seconds')
     uri_latency["get_status_document_node"] = f'{elapsed_status_document_node:.2f}'
@@ -136,11 +148,12 @@ async def processing_source(uri, userName, password, database, model_env_value, 
             uri_latency["update_source_node"] = f'{elapsed_update_source_node:.2f}'
 
             logging.info('Update the status as Processing')
-            update_graph_chunk_processed = 20   # BATCH OF CHUNK IN THE PROCESSING LOOP
+            update_graph_chunk_processed = 20  # BATCH OF CHUNK IN THE PROCESSING LOOP
             job_status = "Completed"
 
             if big_file:
-                logging.info(f"Big file with more than 2000 words, hence extracting only chunk nodes - skipping graph documents and entity extraction for file {file_name}")
+                logging.info(
+                    f"Big file with more than 2000 words, hence extracting only chunk nodes - skipping graph documents and entity extraction for file {file_name}")
 
             for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
                 select_chunks_upto = i + update_graph_chunk_processed
@@ -161,7 +174,8 @@ async def processing_source(uri, userName, password, database, model_env_value, 
 
                     node_count, rel_count, latency_processed_chunk = await processing_chunks(selected_chunks, graph,
                                                                                              uri, userName, password,
-                                                                                             database, file_name, model_env_value,
+                                                                                             database, file_name,
+                                                                                             model_env_value,
                                                                                              allowedNodes,
                                                                                              allowedRelationship,
                                                                                              chunks_to_combine,
@@ -243,7 +257,8 @@ async def processing_source(uri, userName, password, database, model_env_value, 
 
 
 async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, password, database, file_name, model_env_value,
-                            allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None, big_file=False):
+                            allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None,
+                            big_file=False):
     #create vector index and update chunk node with embedding
     latency_processing_chunk = {}
     if graph is not None:
@@ -306,7 +321,8 @@ async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, passwor
         allowedRelationship = "Doc,SOURCE_APP,App,Doc,CREATION_DATE,Date,Doc,CREATION_TIME,Time,Doc,DATE_MODIFIED,Date,Doc,TIME_MODIFIED,Time,Doc,HAS_PATH,Path"
 
     start_entity_extraction = time.time()
-    graph_documents = await get_graph_from_llm(model_env_value, chunkId_chunkDoc_list, allowedNodes, allowedRelationship,
+    graph_documents = await get_graph_from_llm(model_env_value, chunkId_chunkDoc_list, allowedNodes,
+                                               allowedRelationship,
                                                chunks_to_combine, additional_instructions)
     end_entity_extraction = time.time()
 
@@ -338,7 +354,8 @@ async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, passwor
     return node_count, rel_count, latency_processing_chunk
 
 
-def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_overlap, max_token_chunk_size, retry_condition):
+def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_overlap, max_token_chunk_size,
+                              retry_condition):
     if not retry_condition:
         logging.info("Break down file into chunks")
         bad_chars = ['"', "\n", "'"]
@@ -390,28 +407,6 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_o
                 return len(chunks), chunkId_chunkDoc_list
 
 
-def get_source_list_from_graph(uri, userName, password, db_name=None):
-    """
-  Args:
-    uri: URI of the graph to extract
-    db_name: db_name is database name to connect to graph db
-    userName: Username to use for graph creation ( if None will use username from config file )
-    password: Password to use for graph creation ( if None will use password from config file )
-    file: File object containing the PDF file to be used
-    model: Type of model to use ('Diffbot'or'OpenAI GPT')
-  Returns:
-   Returns a list of sources that are in the database by querying the graph and
-   sorting the list by the last updated date. 
- """
-    logging.info("Get existing files list from graph")
-    graph = Neo4jGraph(url=uri, database=db_name, username=userName, password=password)
-    graph_DB_dataAccess = graphDBdataAccess(graph)
-    if not graph._driver._closed:
-        logging.info(f"closing connection for sources_list api")
-        graph._driver.close()
-    return graph_DB_dataAccess.get_source_list()
-
-
 def update_graph(graph):
     """
   Update the graph node with SIMILAR relationship where embedding score match
@@ -435,7 +430,6 @@ def connection_check_and_get_vector_dimensions(graph, database):
 
 
 def upload_file_on_db(graph, model_name, fileName):
-
     obj_source_node = sourceNode()
     obj_source_node.file_name = fileName
     obj_source_node.file_type = fileName.split('.')[-1]
@@ -452,98 +446,6 @@ def upload_file_on_db(graph, model_name, fileName):
     graphDb_data_Access = graphDBdataAccess(graph)
 
     graphDb_data_Access.create_source_node(obj_source_node)
-
-
-
-def get_labels_and_relationtypes(uri, userName, password, database):
-    excluded_labels = {'Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__', 'Session', 'Message'}
-    excluded_relationships = {
-        'NEXT_CHUNK', '_Bloom_Perspective_', 'FIRST_CHUNK',
-        'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY', 'NEXT', 'LAST_MESSAGE'
-    }
-    driver = get_graphDB_driver(uri, userName, password, database)
-    triples = set()
-    with driver.session(database=database) as session:
-        result = session.run("""
-           MATCH (n)-[r]->(m)
-           RETURN DISTINCT labels(n) AS fromLabels, type(r) AS relType, labels(m) AS toLabels
-       """)
-        for record in result:
-            from_labels = record["fromLabels"]
-            to_labels = record["toLabels"]
-            rel_type = record["relType"]
-            from_label = next((lbl for lbl in from_labels if lbl not in excluded_labels), None)
-            to_label = next((lbl for lbl in to_labels if lbl not in excluded_labels), None)
-            if not from_label or not to_label:
-                continue
-            if rel_type == 'PART_OF':
-                if from_label == 'Chunk' and to_label == 'Document':
-                    continue
-            elif rel_type == 'HAS_ENTITY':
-                if from_label == 'Chunk':
-                    continue
-            elif (
-                    from_label in excluded_labels or
-                    to_label in excluded_labels or
-                    rel_type in excluded_relationships
-            ):
-                continue
-            triples.add(f"{from_label}-{rel_type}->{to_label}")
-    return {"triplets": list(triples)}
-
-
-def manually_cancelled_job(graph, filenames, source_types, merged_dir):
-    filename_list = list(map(str.strip, json.loads(filenames)))
-    source_types_list = list(map(str.strip, json.loads(source_types)))
-
-    for (file_name, source_type) in zip(filename_list, source_types_list):
-        obj_source_node = sourceNode()
-        obj_source_node.file_name = file_name.strip() if isinstance(file_name, str) else file_name
-        obj_source_node.is_cancelled = True
-        obj_source_node.status = 'Cancelled'
-        obj_source_node.updated_at = datetime.now()
-        graphDb_data_Access = graphDBdataAccess(graph)
-        graphDb_data_Access.update_source_node(obj_source_node)
-        graphDb_data_Access.update_node_relationship_count(file_name)
-        merged_file_path = os.path.join(merged_dir, file_name)
-
-        logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
-        delete_uploaded_local_file(merged_file_path, file_name)
-
-    return "Cancelled the processing job successfully"
-
-
-def populate_graph_schema_from_text(text, model_env_value, is_schema_description_checked, is_local_storage):
-    """_summary_
-
-  Args:
-      graph (Neo4Graph): Neo4jGraph connection object
-      input_text (str): rendom text from PDF or user input.
-      model (str): AI model to use extraction from text
-
-  Returns:
-      data (list): list of lebels and relationTypes
-  """
-    result = schema_extraction_from_text(text, model_env_value, is_schema_description_checked, is_local_storage)
-    return result
-
-
-def set_status_retry(graph, file_name, retry_condition):
-    graphDb_data_Access = graphDBdataAccess(graph)
-    obj_source_node = sourceNode()
-    status = "Ready to Reprocess"
-    obj_source_node.file_name = file_name.strip() if isinstance(file_name, str) else file_name
-    obj_source_node.status = status
-    obj_source_node.retry_condition = retry_condition
-    obj_source_node.is_cancelled = False
-    if retry_condition == DELETE_ENTITIES_AND_START_FROM_BEGINNING or retry_condition == START_FROM_BEGINNING:
-        obj_source_node.processed_chunk = 0
-    if retry_condition == DELETE_ENTITIES_AND_START_FROM_BEGINNING:
-        execute_graph_query(graph, QUERY_TO_DELETE_EXISTING_ENTITIES, params={"filename": file_name})
-        obj_source_node.node_count = 0
-        obj_source_node.relationship_count = 0
-    logging.info(obj_source_node)
-    graphDb_data_Access.update_source_node(obj_source_node)
 
 
 def failed_file_process(file_name, merged_file_path):

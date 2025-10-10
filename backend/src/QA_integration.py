@@ -1,4 +1,3 @@
-import os
 import json
 import time
 import logging
@@ -45,67 +44,6 @@ class CustomCallback(BaseCallbackHandler):
     ) -> None:
         logging.info("question transformed")
         self.transformed_question = response.generations[0][0].text.strip()
-
-
-def get_total_tokens(ai_response, llm):
-    try:
-        if isinstance(llm, (ChatOpenAI, AzureChatOpenAI, ChatFireworks, ChatGroq)):
-            total_tokens = ai_response.response_metadata.get('token_usage', {}).get('total_tokens', 0)
-
-        elif isinstance(llm, ChatVertexAI):
-            total_tokens = ai_response.response_metadata.get('usage_metadata', {}).get('prompt_token_count', 0)
-
-        elif isinstance(llm, ChatBedrock):
-            total_tokens = ai_response.response_metadata.get('usage', {}).get('total_tokens', 0)
-
-        elif isinstance(llm, ChatAnthropic):
-            input_tokens = int(ai_response.response_metadata.get('usage', {}).get('input_tokens', 0))
-            output_tokens = int(ai_response.response_metadata.get('usage', {}).get('output_tokens', 0))
-            total_tokens = input_tokens + output_tokens
-
-        elif isinstance(llm, ChatOllama):
-            total_tokens = ai_response.response_metadata.get("prompt_eval_count", 0)
-
-        else:
-            logging.warning(f"Unrecognized language model: {type(llm)}. Returning 0 tokens.")
-            total_tokens = 0
-
-    except Exception as e:
-        logging.error(f"Error retrieving total tokens: {e}")
-        total_tokens = 0
-
-    return total_tokens
-
-
-def get_sources_and_chunks(sources_used, docs):
-    chunkdetails_list = []
-    sources_used_set = set(sources_used)
-    seen_ids_and_scores = set()
-
-    for doc in docs:
-        try:
-            source = doc.metadata.get("source")
-            chunkdetails = doc.metadata.get("chunkdetails", [])
-
-            if source in sources_used_set:
-                for chunkdetail in chunkdetails:
-                    id = chunkdetail.get("id")
-                    score = round(chunkdetail.get("score", 0), 4)
-
-                    id_and_score = (id, score)
-
-                    if id_and_score not in seen_ids_and_scores:
-                        seen_ids_and_scores.add(id_and_score)
-                        chunkdetails_list.append({**chunkdetail, "score": score})
-
-        except Exception as e:
-            logging.error(f"Error processing document: {e}")
-
-    result = {
-        'sources': sources_used,
-        'chunkdetails': chunkdetails_list,
-    }
-    return result
 
 
 def get_rag_chain(llm, system_template=CHAT_SYSTEM_TEMPLATE):

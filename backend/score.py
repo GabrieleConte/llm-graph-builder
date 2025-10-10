@@ -100,9 +100,11 @@ async def delete_document_and_entities(
         graphDb_data_Access = graphDBdataAccess(graph)
         files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, fileName, source_type,
                                                   deleteEntities="true", merged_dir=MERGED_DIR)
+        await asyncio.to_thread(graphDb_data_Access.delete_unconnected_nodes)
         message = f"Deleted {files_list_size} documents with entities from database"
         logging.info(message)
         return create_response('Success', message=message)
+
     except Exception as e:
         job_status = "Failed"
         message = f"Unable to delete document {fileName}"
@@ -302,9 +304,8 @@ async def main():
     max_token_chunk_size = 500000
     words_for_big_file = 2000
 
-    fileName = "cars.pdf"
+    fileName = "photo_20250616.txt"
 
-    """
     # ---------------------ELIMINARE UN DOCUMENTO E TUTTE LE SUE ENTITA' DAL KG---------------------
     await delete_document_and_entities(
         uri=uri,
@@ -313,7 +314,6 @@ async def main():
         database=database,
         fileName=fileName,
     )
-    """
 
     """
     # ---------------------UPLOAD ED ESTRAZIONE KG DA FILE LOCALE---------------------

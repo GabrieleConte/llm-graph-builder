@@ -1,13 +1,7 @@
 import logging
 from langchain_neo4j import Neo4jGraph
-import os
 from src.graph_query import get_graphDB_driver
 from src.shared.common_fn import load_embedding_model, execute_graph_query
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import ChatPromptTemplate
-from src.shared.constants import GRAPH_CLEANUP_PROMPT
-from src.llm import get_llm
-from src.graphDB_dataAccess import graphDBdataAccess
 import time
 
 DROP_INDEX_QUERY = "DROP INDEX entities IF EXISTS;"
