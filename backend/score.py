@@ -42,6 +42,7 @@ def validate_file_path(directory, filename):
         raise ValueError("Invalid file path")
     return abs_file_path
 
+
 def compute_entity_embeddings(
         uri: str = "bolt://localhost:7687",
         userName: str = "neo4j",
@@ -57,13 +58,40 @@ def compute_entity_embeddings(
     create_entity_embedding(graph)
 
 
+#Function to delete document and its entities from graph database
+async def delete_document_and_entities(
+        uri: str = "bolt://localhost:7687",
+        userName: str = "neo4j",
+        password: str = "password",
+        database: str = "neo4j",
+        filename: str = '[]',
+):
+    source_type = '["None"]'
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filename, source_type,
+                                                  deleteEntities="true", merged_dir=MERGED_DIR)
+        message = f"Deleted {files_list_size} documents with entities from database"
+        logging.info(message)
+        return create_response('Success', message=message)
+    except Exception as e:
+        job_status = "Failed"
+        message = f"Unable to delete document {filename}"
+        error_message = str(e)
+        logging.exception(f'{message}:{error_message}')
+        return create_response(job_status, message=message, error=error_message)
+    finally:
+        gc.collect()
+
+
 # Function to extract KG from a local file
 async def extract_knowledge_graph_from_file(
         uri: str = "bolt://localhost:7687",
         userName: str = "neo4j",
         password: str = "password",
-        model: str = "groq_gpt-oss-120b",
         database: str = "neo4j",
+        model: str = "groq_gpt-oss-120b",
         file_name: str = None,
         allowedNodes: str = None,
         allowedRelationship: str = None,
@@ -82,10 +110,10 @@ async def extract_knowledge_graph_from_file(
         file_name = sanitize_filename(file_name)
         merged_file_path = validate_file_path(MERGED_DIR, file_name)
         uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model,
-                                                          merged_file_path, file_name, allowedNodes,
-                                                          allowedRelationship, token_chunk_size,
-                                                          chunk_overlap, chunks_to_combine,
-                                                          retry_condition, additional_instructions)
+                                                                       merged_file_path, file_name, allowedNodes,
+                                                                       allowedRelationship, token_chunk_size,
+                                                                       chunk_overlap, chunks_to_combine,
+                                                                       retry_condition, additional_instructions)
 
         extract_api_time = time.time() - start_time
 
@@ -196,7 +224,7 @@ async def chat_bot(
         database: str = "neo4j",
         history=None,
         question: str = None,
-        document_names="[]",
+        document_names='[]',
         mode: str = "graph_vector_fulltext"
 ):
     logging.info(f"QA_RAG called at {datetime.now()}")
@@ -225,45 +253,77 @@ async def chat_bot(
 
 
 async def main():
-    
-    # ESTRARRE KG DA FILE LOCALE
-    fileName = "contact_SaraErba_521.txt"
+    # variabili ricorrenti
+    uri = "bolt://localhost:7687"
+    userName = "neo4j"
+    password = "password"
+    database = "neo4j"
+    fileName = "phoneCall_IncomingSaraErba_4124.txt"
+
+    """
+    # ---------------------ELIMINARE UN DOCUMENTO E TUTTE LE SUE ENTITA' DAL KG---------------------
+    await delete_document_and_entities(
+        uri=uri,
+        userName=userName,
+        password=password,
+        database=database,
+        filename=f'["{fileName}"]',
+    )
+    """
+
+
+    # ---------------------ESTRARRE KG DA FILE LOCALE---------------------
     with open(f"./temp/{fileName}", "r") as f:
         content = f.read()
-
+    
     with open(f"./merged_files/{fileName}", "w") as f:
         f.write(content)
-
+    
     res = await extract_knowledge_graph_from_file(
-        uri="bolt://localhost:7687",
-        userName="neo4j",
-        password="password",
-        database="neo4j",
+        uri=uri,
+        userName=userName,
+        password=password,
+        database=database,
         model="groq_gpt-oss-120b",
         file_name=fileName,
         additional_instructions=None,
     )
     if res["status"] == "Success":
+        logging.info(f"Proceding with post-processing for file {fileName}")
         await post_processing(
-            uri="bolt://localhost:7687",
-            userName="neo4j",
-            password="password",
-            database="neo4j"
+            uri=uri,
+            userName=userName,
+            password=password,
+            database=database,
+        )
+    else:
+        logging.info(f"deleting created entities for {fileName} due to extraction failure")
+        await delete_document_and_entities(
+            uri=uri,
+            userName=userName,
+            password=password,
+            database=database,
+            filename=f'["{fileName}"]',
         )
 
-
-
+    """
+    # ---------------------CALCOLARE EMBEDDINGS PER TUTTE LE ENTITA' SENZA EMBEDDINGS---------------------
+    compute_entity_embeddings(
+        uri=uri,
+        userName=userName,
+        password=password,
+        database=database,
+    )
+    """
 
     """
-    
-    #FARE DOMANDE AL CHATBOT
+    # ---------------------FARE DOMANDE AL CHATBOT---------------------
     messages = [AIMessage(content="Hello! How can I assist you today?"),
                HumanMessage(content="Tell me info about stingray"),
                AIMessage(content="The 1963 Chevrolet Corvette Sting Ray is a two‑door coupe produced by the American automaker Chevrolet. It features a fastback rear design, hidden headlamps, and distinctive “humps” over the fenders, along with a split‑back rear window (a design later changed for safety). In 1963 Chevrolet built about 21,000 Sting Rays. Performance specs listed in the source are a top speed of 118 mph, 0‑60 mph in 6.1 seconds, and fuel consumption of 18 mpg."),]
 
     result = await chat_bot(question="is it a car from 60s?", history=messages)
     print(result)
-    
     """
 
 
