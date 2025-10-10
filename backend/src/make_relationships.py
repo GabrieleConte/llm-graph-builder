@@ -9,9 +9,7 @@ import time
 from langchain_neo4j import Neo4jVector
 
 logging.basicConfig(format='%(asctime)s - %(message)s', level='INFO')
-
-EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
-EMBEDDING_FUNCTION, EMBEDDING_DIMENSION = load_embedding_model(EMBEDDING_MODEL)
+EMBEDDING_FUNCTION, EMBEDDING_DIMENSION = load_embedding_model()
 
 
 def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id: list):
@@ -39,20 +37,16 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
 
 
 def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
-    isEmbedding = os.getenv('IS_EMBEDDING')
-
     embeddings, dimension = EMBEDDING_FUNCTION, EMBEDDING_DIMENSION
     logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
     data_for_query = []
     logging.info(f"update embedding and vector index for chunks")
     for row in chunkId_chunkDoc_list:
-        if isEmbedding.upper() == "TRUE":
-            embeddings_arr = embeddings.embed_query(row['chunk_doc'].page_content)
-
-            data_for_query.append({
-                "chunkId": row['chunk_id'],
-                "embeddings": embeddings_arr
-            })
+        embeddings_arr = embeddings.embed_query(row['chunk_doc'].page_content)
+        data_for_query.append({
+            "chunkId": row['chunk_id'],
+            "embeddings": embeddings_arr
+        })
 
     query_to_create_embedding = """
         UNWIND $data AS row

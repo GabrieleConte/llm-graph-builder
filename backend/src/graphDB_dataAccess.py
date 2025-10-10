@@ -1,6 +1,8 @@
 import logging
 import os
 import time
+
+from huggingface_hub import duplicate_space
 from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import delete_uploaded_local_file, load_embedding_model
@@ -158,8 +160,7 @@ class graphDBdataAccess:
         """
         index = self.graph.query("""show indexes yield * where type = 'VECTOR' and name = 'vector'""",
                                  session_params={"database": self.graph._database})
-        # logging.info(f'show index vector: {index}')
-        knn_min_score = os.environ.get('KNN_MIN_SCORE')
+        knn_min_score = 0.94
         if len(index) > 0:
             logging.info('update KNN graph')
             self.graph.query("""MATCH (c:Chunk)
@@ -249,8 +250,7 @@ class graphDBdataAccess:
                                                     count(c.embedding) as hasEmbedding
                                 """, session_params={"database": self.graph._database})
 
-        embedding_model = os.getenv('EMBEDDING_MODEL')
-        embeddings, application_dimension = load_embedding_model(embedding_model)
+        embeddings, application_dimension = load_embedding_model()
         logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
 
         gds_status = self.check_gds_version()
@@ -410,8 +410,8 @@ class graphDBdataAccess:
         return self.execute_query(query, param)
 
     def get_duplicate_nodes_list(self):
-        score_value = float(os.environ.get('DUPLICATE_SCORE_VALUE'))
-        text_distance = int(os.environ.get('DUPLICATE_TEXT_DISTANCE'))
+        duplicate_score_value = 0.97
+        duplicate_text_distance = 3
         query_duplicate_nodes = """
                 MATCH (n:!Chunk&!Session&!Document&!`__Community__`) with n 
                 WHERE n.embedding is not null and n.id is not null // and size(toString(n.id)) > 3
@@ -453,7 +453,7 @@ class graphDBdataAccess:
                 """
         total_duplicate_nodes = "RETURN COUNT(DISTINCT(n)) as total"
 
-        param = {"duplicate_score_value": score_value, "duplicate_text_distance": text_distance}
+        param = {"duplicate_score_value": duplicate_score_value, "duplicate_text_distance": duplicate_text_distance}
 
         nodes_list = self.execute_query(query_duplicate_nodes.format(return_statement=return_query_duplicate_nodes),
                                         param=param)
@@ -485,8 +485,7 @@ class graphDBdataAccess:
         """
         drop and create the vector index when vector index dimesion are different.
         """
-        embedding_model = os.getenv('EMBEDDING_MODEL')
-        embeddings, dimension = load_embedding_model(embedding_model)
+        embeddings, dimension = load_embedding_model()
 
         if isVectorIndexExist == 'true':
             self.graph.query("""drop index vector""", session_params={"database": self.graph._database})

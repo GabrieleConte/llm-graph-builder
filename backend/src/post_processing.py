@@ -130,8 +130,7 @@ def create_fulltext(driver, type):
 
 def create_vector_fulltext_indexes(uri, username, password, database):
     types = ["entities", "hybrid"]
-    embedding_model = os.getenv('EMBEDDING_MODEL')
-    embeddings, dimension = load_embedding_model(embedding_model)
+    embeddings, dimension = load_embedding_model()
     if not dimension:
         dimension = CHUNK_VECTOR_EMBEDDING_DIMENSION
     logging.info("Starting the process of creating full-text indexes.")
@@ -185,8 +184,7 @@ def fetch_entities_for_embedding(graph):
 
 
 def update_embeddings(rows, graph):
-    embedding_model = os.getenv('EMBEDDING_MODEL')
-    embeddings, dimension = load_embedding_model(embedding_model)
+    embeddings, dimension = load_embedding_model()
     logging.info(f"update embedding for entities")
     for row in rows:
         row['embedding'] = embeddings.embed_query(row['text'])

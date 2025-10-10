@@ -1,4 +1,4 @@
-import os
+from langchain_core.messages import AIMessage
 from src.main import *
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.graphDB_dataAccess import graphDBdataAccess
@@ -58,26 +58,54 @@ def compute_entity_embeddings(
     create_entity_embedding(graph)
 
 
+# Function to upload files
+async def upload_file(
+        uri: str = "bolt://localhost:7687",
+        userName: str = "neo4j",
+        password: str = "password",
+        database: str = "neo4j",
+        model_name: str = None,
+        fileName: str = None,
+):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        result = await asyncio.to_thread(upload_file_on_db, graph, model_name, fileName)
+        return create_response('Success', data=result, message='Source Node Created Successfully')
+
+    except Exception as e:
+        message = "Unable to upload file"
+        error_message = str(e)
+        graph = create_graph_database_connection(uri, userName, password, database)
+        graphDb_data_Access = graphDBdataAccess(graph)
+        graphDb_data_Access.update_exception_db(fileName, error_message)
+        logging.info(message)
+        logging.exception(f'Exception:{error_message}')
+        return create_response('Failed', message=message + error_message[:100], error=error_message)
+    finally:
+        gc.collect()
+
+
 #Function to delete document and its entities from graph database
 async def delete_document_and_entities(
         uri: str = "bolt://localhost:7687",
         userName: str = "neo4j",
         password: str = "password",
         database: str = "neo4j",
-        filename: str = '[]',
+        fileName: str = None,
 ):
+    fileName = f'["{fileName}"]'
     source_type = '["None"]'
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)
-        files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, filename, source_type,
+        files_list_size = await asyncio.to_thread(graphDb_data_Access.delete_file_from_graph, fileName, source_type,
                                                   deleteEntities="true", merged_dir=MERGED_DIR)
         message = f"Deleted {files_list_size} documents with entities from database"
         logging.info(message)
         return create_response('Success', message=message)
     except Exception as e:
         job_status = "Failed"
-        message = f"Unable to delete document {filename}"
+        message = f"Unable to delete document {fileName}"
         error_message = str(e)
         logging.exception(f'{message}:{error_message}')
         return create_response(job_status, message=message, error=error_message)
@@ -91,13 +119,16 @@ async def extract_knowledge_graph_from_file(
         userName: str = "neo4j",
         password: str = "password",
         database: str = "neo4j",
-        model: str = "groq_gpt-oss-120b",
+        model_env_value: str = None,
+        model_name: str = None,
         file_name: str = None,
         allowedNodes: str = None,
         allowedRelationship: str = None,
         token_chunk_size: int = 300,
         chunk_overlap: int = 20,
         chunks_to_combine: int = 3,
+        max_token_chunk_size: int = 500000,
+        words_for_big_file: int = 2000,
         retry_condition: str = None,
         additional_instructions: Optional[str] = None,
 
@@ -109,10 +140,12 @@ async def extract_knowledge_graph_from_file(
 
         file_name = sanitize_filename(file_name)
         merged_file_path = validate_file_path(MERGED_DIR, file_name)
-        uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database, model,
+        uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database,
+                                                                       model_env_value, model_name,
                                                                        merged_file_path, file_name, allowedNodes,
                                                                        allowedRelationship, token_chunk_size,
                                                                        chunk_overlap, chunks_to_combine,
+                                                                       max_token_chunk_size, words_for_big_file,
                                                                        retry_condition, additional_instructions)
 
         extract_api_time = time.time() - start_time
@@ -218,17 +251,19 @@ async def post_processing(
 
 async def chat_bot(
         uri: str = "bolt://localhost:7687",
-        model: str = "groq_gpt-oss-120b",
         userName: str = "neo4j",
         password: str = "password",
         database: str = "neo4j",
+        model_env_value: str = None,
+        model_name: str = None,
         history=None,
         question: str = None,
-        document_names='[]',
         mode: str = "graph_vector_fulltext"
 ):
     logging.info(f"QA_RAG called at {datetime.now()}")
     qa_rag_start_time = time.time()
+    document_names = '[]'
+
     try:
         if mode == "graph":
             graph = Neo4jGraph(url=uri, username=userName, password=password, database=database, sanitize=True,
@@ -237,8 +272,8 @@ async def chat_bot(
             graph = create_graph_database_connection(uri, userName, password, database)
 
         graphDBdataAccess(graph)
-        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, history=history, question=question,
-                                         document_names=document_names, mode=mode)
+        result = await asyncio.to_thread(QA_RAG, graph=graph, model_env_value=model_env_value, model_name=model_name,
+                                         history=history, question=question, document_names=document_names, mode=mode)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Success: total Response time is  {total_call_time:.2f} seconds")
@@ -253,12 +288,21 @@ async def chat_bot(
 
 
 async def main():
-    # variabili ricorrenti
+    # ENVIRONMENT VARIABLES
     uri = "bolt://localhost:7687"
     userName = "neo4j"
     password = "password"
     database = "neo4j"
-    fileName = "phoneCall_IncomingSaraErba_4124.txt"
+    #model_env_value = "groq,openai/gpt-oss-120b,https://api.groq.com,${GROQ_API_KEY}"
+    model_env_value = "groq,openai/gpt-oss-120b,https://api.groq.com,(...api_key...)"
+    model_name = "openai/gpt-oss-120b"
+    token_chunk_size = 300
+    chunk_overlap = 20
+    chunks_to_combine = 3
+    max_token_chunk_size = 500000
+    words_for_big_file = 2000
+
+    fileName = "cars.pdf"
 
     """
     # ---------------------ELIMINARE UN DOCUMENTO E TUTTE LE SUE ENTITA' DAL KG---------------------
@@ -267,62 +311,91 @@ async def main():
         userName=userName,
         password=password,
         database=database,
-        filename=f'["{fileName}"]',
+        fileName=fileName,
     )
     """
 
-
-    # ---------------------ESTRARRE KG DA FILE LOCALE---------------------
-    with open(f"./temp/{fileName}", "r") as f:
-        content = f.read()
-    
-    with open(f"./merged_files/{fileName}", "w") as f:
-        f.write(content)
-    
-    res = await extract_knowledge_graph_from_file(
+    """
+    # ---------------------UPLOAD ED ESTRAZIONE KG DA FILE LOCALE---------------------
+    res = await upload_file(
         uri=uri,
         userName=userName,
         password=password,
         database=database,
-        model="groq_gpt-oss-120b",
-        file_name=fileName,
-        additional_instructions=None,
+        fileName=fileName,
+        model_name=model_name,
     )
-    if res["status"] == "Success":
-        logging.info(f"Proceding with post-processing for file {fileName}")
-        await post_processing(
+    
+    if res["status"] == "Success":  
+        with open(f"./temp/{fileName}", "rb") as f:
+            content = f.read()
+        
+        merged_file_path = f"./merged_files/{fileName}"
+        with open(merged_file_path, "wb") as f:
+            f.write(content)
+        
+        res = await extract_knowledge_graph_from_file(
+            file_name=fileName,
+            additional_instructions=None,
             uri=uri,
             userName=userName,
             password=password,
             database=database,
+            model_env_value=model_env_value,
+            model_name=model_name,
+            token_chunk_size=token_chunk_size,
+            chunk_overlap=chunk_overlap,
+            chunks_to_combine=chunks_to_combine,
+            max_token_chunk_size=max_token_chunk_size,
+            words_for_big_file=words_for_big_file
         )
-    else:
-        logging.info(f"deleting created entities for {fileName} due to extraction failure")
-        await delete_document_and_entities(
-            uri=uri,
-            userName=userName,
-            password=password,
-            database=database,
-            filename=f'["{fileName}"]',
-        )
+        if res["status"] == "Success":
+            logging.info(f"Proceding with post-processing for file {fileName}")
+            await post_processing(
+                uri=uri,
+                userName=userName,
+                password=password,
+                database=database,
+            )
+        else:
+            logging.info(f"deleting created entities for {fileName} due to extraction failure")
+            await delete_document_and_entities(
+                fileName=fileName,
+                uri=uri,
+                userName=userName,
+                password=password,
+                database=database,
+            )
+    """
 
     """
     # ---------------------CALCOLARE EMBEDDINGS PER TUTTE LE ENTITA' SENZA EMBEDDINGS---------------------
     compute_entity_embeddings(
-        uri=uri,
-        userName=userName,
-        password=password,
-        database=database,
+        uri=uri,    
+        userName=userName,  
+        password=password,  
+        database=database,  
     )
     """
 
     """
     # ---------------------FARE DOMANDE AL CHATBOT---------------------
-    messages = [AIMessage(content="Hello! How can I assist you today?"),
-               HumanMessage(content="Tell me info about stingray"),
-               AIMessage(content="The 1963 Chevrolet Corvette Sting Ray is a two‑door coupe produced by the American automaker Chevrolet. It features a fastback rear design, hidden headlamps, and distinctive “humps” over the fenders, along with a split‑back rear window (a design later changed for safety). In 1963 Chevrolet built about 21,000 Sting Rays. Performance specs listed in the source are a top speed of 118 mph, 0‑60 mph in 6.1 seconds, and fuel consumption of 18 mpg."),]
+    messages = [
+        AIMessage(content="Hello! How can I assist you today?"),
+        HumanMessage(content="Tell me info about stingray"),
+        AIMessage(content="The 1963 Chevrolet Corvette Sting Ray is a two‑door coupe produced by the American automaker Chevrolet. It features a fastback rear design, hidden headlamps, and distinctive “humps” over the fenders, along with a split‑back rear window (a design later changed for safety). In 1963 Chevrolet built about 21,000 Sting Rays. Performance specs listed in the source are a top speed of 118 mph, 0‑60 mph in 6.1 seconds, and fuel consumption of 18 mpg."),
+    ]
 
-    result = await chat_bot(question="is it a car from 60s?", history=messages)
+    result = await chat_bot(
+        question="is it a car from 60s?", 
+        history=messages,
+        uri=uri,    
+        userName=userName,  
+        password=password,  
+        database=database,  
+        model_env_value=model_env_value,
+        model_name=model_name,
+    )
     print(result)
     """
 

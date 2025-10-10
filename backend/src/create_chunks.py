@@ -13,7 +13,7 @@ class CreateChunksofDocument:
         self.pages = pages
         self.graph = graph
 
-    def split_file_into_chunks(self, token_chunk_size, chunk_overlap):
+    def split_file_into_chunks(self, token_chunk_size, chunk_overlap, max_token_chunk_size):
         """
         Split a list of documents(file pages) into chunks of fixed size.
 
@@ -25,8 +25,7 @@ class CreateChunksofDocument:
         """
         logging.info("Split file into smaller chunks")
         text_splitter = TokenTextSplitter(chunk_size=token_chunk_size, chunk_overlap=chunk_overlap)
-        MAX_TOKEN_CHUNK_SIZE = int(os.getenv('MAX_TOKEN_CHUNK_SIZE', 100000))
-        chunk_to_be_created = int(MAX_TOKEN_CHUNK_SIZE / token_chunk_size)
+        chunk_to_be_created = int(max_token_chunk_size / token_chunk_size)
 
         chunks = []
         for i, document in enumerate(self.pages):

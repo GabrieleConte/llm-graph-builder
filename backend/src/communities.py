@@ -193,11 +193,6 @@ COMMUNITY_INDEX_FULL_TEXT_QUERY = f"CREATE FULLTEXT INDEX {COMMUNITY_FULLTEXT_IN
 
 def get_gds_driver(uri, username, password, database):
     try:
-        if all(v is None for v in [username, password]):
-            username= os.getenv('NEO4J_USERNAME')
-            database= os.getenv('NEO4J_DATABASE')
-            password= os.getenv('NEO4J_PASSWORD')
-            
         gds = GraphDataScience(
             endpoint=uri,
             auth=(username, password),
@@ -247,12 +242,12 @@ def write_communities(gds, graph_project, project_name=COMMUNITY_PROJECTION_NAME
         return False
 
 
-def get_community_chain(model, is_parent=False,community_template=COMMUNITY_TEMPLATE,system_template=COMMUNITY_SYSTEM_TEMPLATE):
+def get_community_chain(model_env_value, is_parent=False,community_template=COMMUNITY_TEMPLATE,system_template=COMMUNITY_SYSTEM_TEMPLATE):
     try:
         if is_parent:
             community_template=PARENT_COMMUNITY_TEMPLATE
             system_template= PARENT_COMMUNITY_SYSTEM_TEMPLATE
-        llm, model_name = get_llm(model)
+        llm, model_name = get_llm(model_env_value)
         community_prompt = ChatPromptTemplate.from_messages(
             [
                 (
@@ -311,10 +306,10 @@ def process_community_info(community, chain, is_parent=False):
         logging.error(f"Failed to process community {community.get('communityId', 'unknown')}: {e}")
         return None
 
-def create_community_summaries(gds, model):
+def create_community_summaries(gds, model_env_value):
     try:
         community_info_list = gds.run_cypher(GET_COMMUNITY_INFO)
-        community_chain = get_community_chain(model)
+        community_chain = get_community_chain(model_env_value)
 
         summaries = []
         with ThreadPoolExecutor() as executor:
@@ -330,7 +325,7 @@ def create_community_summaries(gds, model):
         gds.run_cypher(STORE_COMMUNITY_SUMMARIES, params={"data": summaries})
 
         parent_community_info = gds.run_cypher(GET_PARENT_COMMUNITY_INFO)
-        parent_community_chain = get_community_chain(model, is_parent=True)
+        parent_community_chain = get_community_chain(model_env_value, is_parent=True)
 
         parent_summaries = []
         with ThreadPoolExecutor() as executor:
@@ -351,9 +346,8 @@ def create_community_summaries(gds, model):
 
 def create_community_embeddings(gds):
     try:
-        embedding_model = os.getenv('EMBEDDING_MODEL')
-        embeddings, dimension = load_embedding_model(embedding_model)
-        logging.info(f"Embedding model '{embedding_model}' loaded successfully.")
+        embeddings, dimension = load_embedding_model()
+        logging.info(f"Embedding model loaded successfully.")
         
         logging.info("Fetching community details.")
         rows = gds.run_cypher(GET_COMMUNITY_DETAILS)
@@ -444,7 +438,7 @@ def create_fulltext_index(gds, index_type):
         logging.error("An error occurred while creating the full-text index.", exc_info=True)
         logging.error(f"Error details: {str(e)}")
 
-def create_community_properties(gds, model):
+def create_community_properties(gds, model_env_value):
     commands = [
         (CREATE_COMMUNITY_CONSTRAINT, "created community constraint to the graph."),
         (CREATE_COMMUNITY_LEVELS, "Successfully created community levels."),
@@ -458,7 +452,7 @@ def create_community_properties(gds, model):
             gds.run_cypher(command)
             logging.info(message)
 
-        create_community_summaries(gds, model)
+        create_community_summaries(gds, model_env_value)
         logging.info("Successfully created community summaries.")
 
         embedding_dimension = create_community_embeddings(gds)

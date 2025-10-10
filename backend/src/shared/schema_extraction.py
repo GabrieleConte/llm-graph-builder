@@ -58,9 +58,9 @@ def get_schema_local_storage(input_text,llm):
     return raw_schema
 
 
-def schema_extraction_from_text(input_text:str, model:str, is_schema_description_checked:bool,is_local_storage:bool):
+def schema_extraction_from_text(input_text:str, model_env_value:str, is_schema_description_checked:bool,is_local_storage:bool):
     try:
-        llm, model_name = get_llm(model)
+        llm, model_name = get_llm(model_env_value)
         if str(is_local_storage).lower().strip() == "true":
             raw_schema = get_schema_local_storage(input_text,llm)
             return raw_schema

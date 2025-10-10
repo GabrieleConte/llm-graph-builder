@@ -22,9 +22,10 @@ def create_graph_database_connection(uri, userName, password, database):
     return graph
 
 
-def load_embedding_model(embedding_model_name: str):
+def load_embedding_model():
     embeddings = HuggingFaceEmbeddings(
-        model_name="Qwen/Qwen3-Embedding-0.6B"  #, cache_folder="/embedding_model"
+        model_name="Qwen/Qwen3-Embedding-0.6B",
+        cache_folder="/embedding_model"
     )
     dimension = 1024
     logging.info(f"Embedding: Using Langchain HuggingFaceEmbeddings , Dimension:{dimension}")

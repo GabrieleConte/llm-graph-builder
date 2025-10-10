@@ -15,21 +15,21 @@ from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import re
 
 
-def get_llm(model: str):
+def get_llm(model_env_value: str):
     """Retrieve the specified language model based on the model name."""
-    model = model.lower().strip()
-    env_key = f"LLM_MODEL_CONFIG_{model}"
-    env_value = os.environ.get(env_key)
 
-    if not env_value:
-        err = f"Environment variable '{env_key}' is not defined as per format or missing"
-        logging.error(err)
-        raise Exception(err)
-
-    logging.info("Model: {}".format(env_key))
     try:
-        if "gemini" in model:
-            model_name = env_value
+        if model_env_value.startswith('groq'):
+            provider, model_name, base_url, api_key = model_env_value.split(",")
+            llm = ChatGroq(
+                api_key=api_key,
+                model_name=model_name,
+                base_url=base_url,
+                temperature=0
+                )
+
+        elif model_env_value.startswith('gemini'):
+            provider, model_name = model_env_value.split(",")
             credentials, project_id = google.auth.default()
             llm = ChatVertexAI(
                 model_name=model_name,
@@ -44,22 +44,25 @@ def get_llm(model: str):
                     HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
                 },
             )
-        elif "openai" in model:
-            model_name, api_key = env_value.split(",")
-            if "o3-mini" in model:
-                llm = ChatOpenAI(
-                    api_key=api_key,
-                    model=model_name
-                )
-            else:
-                llm = ChatOpenAI(
+
+        elif model_env_value.startswith('ollama'):
+            provider, model_name, base_url = model_env_value.split(",")
+            llm = ChatOllama(
+                base_url=base_url,
+                model=model_name,
+                temperature=0
+            )
+
+        elif model_env_value.startswith('openai'):
+            provider, model_name, api_key = model_env_value.split(",")
+            llm = ChatOpenAI(
                     api_key=api_key,
                     model=model_name,
                     temperature=0,
                 )
 
-        elif "anthropic" in model:
-            model_name, api_key = env_value.split(",")
+        elif model_env_value.startswith('anthropic'):
+            provider, model_name, api_key = model_env_value.split(",")
             llm = ChatAnthropic(
                 api_key=api_key,
                 model=model_name,
@@ -67,25 +70,8 @@ def get_llm(model: str):
                 timeout=None
             )
 
-        elif "groq" in model:
-            model_name, base_url, api_key = env_value.split(",")
-            llm = ChatGroq(
-                api_key=api_key,
-                model_name=model_name,
-                base_url=base_url,
-                temperature=0
-                )
-
-        elif "ollama" in model:
-            model_name, base_url = env_value.split(",")
-            llm = ChatOllama(
-                base_url=base_url,
-                model=model_name,
-                temperature=0
-            )
-
         else:
-            model_name, api_endpoint, api_key = env_value.split(",")
+            provider, model_name, api_endpoint, api_key = model_env_value.split(",")
             llm = ChatOpenAI(
                 api_key=api_key,
                 base_url=api_endpoint,
@@ -94,11 +80,11 @@ def get_llm(model: str):
             )
 
     except Exception as e:
-        err = f"Error while creating LLM '{model}': {str(e)}"
+        err = f"Error while creating LLM: {str(e)}"
         logging.error(err)
         raise Exception(err)
 
-    logging.info(f"Model created - Model Version: {model}")
+    logging.info(f"Model created")
     return llm, model_name
 
 
@@ -189,10 +175,10 @@ async def get_graph_document_list(
     return graph_document_list
 
 
-async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine,
+async def get_graph_from_llm(model_env_value, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine,
                              additional_instructions=None):
     try:
-        llm, model_name = get_llm(model)
+        llm, model_name = get_llm(model_env_value)
         logging.info(f"Using model: {model_name}")
 
         combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)

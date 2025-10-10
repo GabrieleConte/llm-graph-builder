@@ -31,8 +31,8 @@ from src.shared.constants import *
 
 load_dotenv()
 
-EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
-EMBEDDING_FUNCTION, _ = load_embedding_model(EMBEDDING_MODEL)
+
+EMBEDDING_FUNCTION, _ = load_embedding_model()
 
 
 class CustomCallback(BaseCallbackHandler):
@@ -130,10 +130,10 @@ def get_rag_chain(llm, system_template=CHAT_SYSTEM_TEMPLATE):
         raise
 
 
-def format_documents(documents, model):
+def format_documents(documents, model_name):
     prompt_token_cutoff = 4
     for model_names, value in CHAT_TOKEN_CUT_OFF.items():
-        if model in model_names:
+        if model_name in model_names:
             prompt_token_cutoff = value
             break
 
@@ -161,11 +161,11 @@ def format_documents(documents, model):
     return "\n\n".join(formatted_docs)
 
 
-def process_documents(docs, question, messages, llm, model):
+def process_documents(docs, question, messages, llm, model_name):
     start_time = time.time()
 
     try:
-        formatted_docs = format_documents(docs, model)
+        formatted_docs = format_documents(docs, model_name)
 
         rag_chain = get_rag_chain(llm=llm)
         ai_response = rag_chain.invoke({
@@ -319,10 +319,8 @@ def get_neo4j_retriever(graph, document_names, chat_mode_settings, score_thresho
     try:
 
         neo_db = initialize_neo4j_vector(graph, chat_mode_settings)
-        # document_names= list(map(str.strip, json.loads(document_names)))
         search_k = chat_mode_settings["top_k"]
-        ef_ratio = int(os.getenv("EFFECTIVE_SEARCH_RATIO", "2")) if os.getenv("EFFECTIVE_SEARCH_RATIO",
-                                                                              "2").isdigit() else 2
+        ef_ratio = 5    # EFFECTIVE SEARCH RATIO
         retriever = create_retriever(neo_db, document_names, chat_mode_settings, search_k, score_threshold, ef_ratio)
         return retriever
     except Exception as e:
@@ -332,11 +330,11 @@ def get_neo4j_retriever(graph, document_names, chat_mode_settings, score_thresho
             f"An error occurred while retrieving the Neo4jVector index or creating the retriever. Please drop and create a new vector index '{index_name}': {e}") from e
 
 
-def setup_chat(model, graph, document_names, chat_mode_settings):
+def setup_chat(model_env_value, graph, document_names, chat_mode_settings):
     start_time = time.time()
     try:
-        llm, model_name = get_llm(model=model)
-        logging.info(f"Model called in chat: {model} (version: {model_name})")
+        llm, model_name = get_llm(model_env_value=model_env_value)
+        logging.info(f"Model called in chat")
 
         retriever = get_neo4j_retriever(graph=graph, chat_mode_settings=chat_mode_settings,
                                         document_names=document_names)
@@ -352,13 +350,13 @@ def setup_chat(model, graph, document_names, chat_mode_settings):
     return llm, doc_retriever, model_name
 
 
-def process_chat_response(messages, question, model, graph, document_names, chat_mode_settings):
+def process_chat_response(messages, question, model_env_value, model_name, graph, document_names, chat_mode_settings):
     try:
-        llm, doc_retriever, model_version = setup_chat(model, graph, document_names, chat_mode_settings)
+        llm, doc_retriever, model_version = setup_chat(model_env_value, graph, document_names, chat_mode_settings)
         docs, transformed_question = retrieve_documents(doc_retriever, messages)
 
         if docs:
-            content = process_documents(docs, question, messages, llm, model)
+            content = process_documents(docs, question, messages, llm, model_name)
         else:
             content = "I couldn't find any relevant documents to answer your question."
 
@@ -383,7 +381,7 @@ def get_chat_mode_settings(mode, settings_map=CHAT_MODE_CONFIG_MAP):
     return chat_mode_settings
 
 
-def QA_RAG(graph, model, history, question, document_names, mode):
+def QA_RAG(graph, model_env_value, model_name, history, question, document_names, mode):
     logging.info(f"Chat Mode: {mode}")
 
     messages = history
@@ -391,6 +389,6 @@ def QA_RAG(graph, model, history, question, document_names, mode):
     chat_mode_settings = get_chat_mode_settings(mode=mode)
     document_names = list(map(str.strip, json.loads(document_names)))
 
-    result = process_chat_response(messages, question, model, graph, document_names, chat_mode_settings)
+    result = process_chat_response(messages, question, model_env_value, model_name, graph, document_names, chat_mode_settings)
 
     return result
