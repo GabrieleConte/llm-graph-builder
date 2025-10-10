@@ -3,7 +3,6 @@ import time
 import logging
 from datetime import datetime
 from typing import Any
-from dotenv import load_dotenv
 from langchain_neo4j import Neo4jVector
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
@@ -16,8 +15,6 @@ from langchain_core.callbacks import BaseCallbackHandler
 from src.llm import get_llm
 from src.shared.common_fn import load_embedding_model
 from src.shared.constants import *
-
-load_dotenv()
 
 EMBEDDING_FUNCTION, _ = load_embedding_model()
 

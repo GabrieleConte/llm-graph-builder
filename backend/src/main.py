@@ -6,7 +6,6 @@ from src.shared.constants import (QUERY_TO_GET_CHUNKS,
                                   START_FROM_LAST_PROCESSED_POSITION,
                                   DELETE_ENTITIES_AND_START_FROM_BEGINNING,
                                   QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
-from dotenv import load_dotenv
 from datetime import datetime
 from src.create_chunks import CreateChunksofDocument
 from src.graphDB_dataAccess import graphDBdataAccess
@@ -20,7 +19,6 @@ from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from langchain.docstore.document import Document
 
 warnings.filterwarnings("ignore")
-load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(message)s', level='INFO')
 
 

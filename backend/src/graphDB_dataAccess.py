@@ -8,10 +8,6 @@ from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COU
 from src.source_node import sourceNode
 from src.communities import MAX_COMMUNITY_LEVELS
 import json
-from dotenv import load_dotenv
-
-
-load_dotenv()
 
 
 class graphDBdataAccess:
