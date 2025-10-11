@@ -129,7 +129,6 @@ class graphDBdataAccess:
             self.update_exception_db(self, self.file_name, error_message)
             raise Exception(error_message)
 
-
     def update_KNN_graph(self):
         """
         Update the graph node with SIMILAR relationship where embedding score match
@@ -226,8 +225,8 @@ class graphDBdataAccess:
                                                     count(c.embedding) as hasEmbedding
                                 """, session_params={"database": self.graph._database})
 
-        embeddings, application_dimension = load_embedding_model()
-        logging.info(f'embedding model:{embeddings} and dimesion:{application_dimension}')
+        embeddings = load_embedding_model()
+        logging.info(f'embedding model:{embeddings}')
 
         gds_status = self.check_gds_version()
         write_access = self.check_account_access(database=database)
@@ -235,18 +234,17 @@ class graphDBdataAccess:
         if self.graph:
             if len(db_vector_dimension) > 0:
                 return {'db_vector_dimension': db_vector_dimension[0]['vector_dimensions'],
-                        'application_dimension': application_dimension, 'message': "Connection Successful",
+                        'message': "Connection Successful",
                         "gds_status": gds_status, "write_access": write_access}
             else:
                 if len(db_vector_dimension) == 0 and len(result_chunks) == 0:
                     logging.info("Chunks and vector index does not exists in database")
-                    return {'db_vector_dimension': 0, 'application_dimension': application_dimension,
-                            'message': "Connection Successful", "chunks_exists": False, "gds_status": gds_status,
+                    return {'db_vector_dimension': 0, 'message': "Connection Successful", "chunks_exists": False,
+                            "gds_status": gds_status,
                             "write_access": write_access}
-                elif len(db_vector_dimension) == 0 and result_chunks[0]['hasEmbedding'] == 0 and result_chunks[0][
-                    'chunks'] > 0:
-                    return {'db_vector_dimension': 0, 'application_dimension': application_dimension,
-                            'message': "Connection Successful", "chunks_exists": True, "gds_status": gds_status,
+                elif len(db_vector_dimension) == 0 and result_chunks[0]['hasEmbedding'] == 0 and result_chunks[0]['chunks'] > 0:
+                    return {'db_vector_dimension': 0, 'message': "Connection Successful", "chunks_exists": True,
+                            "gds_status": gds_status,
                             "write_access": write_access}
                 else:
                     return {'message': "Connection Successful", "gds_status": gds_status, "write_access": write_access}
@@ -345,7 +343,6 @@ class graphDBdataAccess:
             _ = self.execute_query(query_to_delete_document, param)
         return len(filename_list)
 
-
     def delete_unconnected_nodes(self):
         logging.info(f"Deleting unconnected nodes from database")
         query = """
@@ -426,7 +423,6 @@ class graphDBdataAccess:
         """
         param = {"rows": nodes_list}
         return self.execute_query(query, param)
-
 
     def update_node_relationship_count(self, document_name):
         logging.info("updating node and relationship count")

@@ -1,4 +1,5 @@
 from langchain_core.messages import AIMessage
+import os
 from src.main import *
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.graphDB_dataAccess import graphDBdataAccess
@@ -17,6 +18,7 @@ logger = CustomLogger()
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
 
+# ---------------------UTILITY FUNCTIONS---------------------
 def sanitize_filename(filename):
     """
    Sanitize the user-provided filename to prevent directory traversal and remove unsafe characters.
@@ -54,6 +56,8 @@ def compute_entity_embeddings(
 
     create_entity_embedding(graph)
 
+
+# ---------------------KG BUILDER FUNCTIONS---------------------
 
 # Function to upload files
 async def upload_file(
@@ -292,8 +296,7 @@ async def main():
     userName = "neo4j"
     password = "password"
     database = "neo4j"
-    #model_env_value = "groq,openai/gpt-oss-120b,https://api.groq.com,${GROQ_API_KEY}"
-    model_env_value = "groq,openai/gpt-oss-120b,https://api.groq.com,(...api_key...)"
+    model_env_value = "groq,openai/gpt-oss-120b,(...)"
     model_name = "openai/gpt-oss-120b"
     token_chunk_size = 300
     chunk_overlap = 20
@@ -303,6 +306,7 @@ async def main():
 
     fileName = "photo_20250616.txt"
 
+    """
     # ---------------------ELIMINARE UN DOCUMENTO E TUTTE LE SUE ENTITA' DAL KG---------------------
     await delete_document_and_entities(
         uri=uri,
@@ -311,6 +315,7 @@ async def main():
         database=database,
         fileName=fileName,
     )
+    """
 
     """
     # ---------------------UPLOAD ED ESTRAZIONE KG DA FILE LOCALE---------------------
@@ -375,7 +380,6 @@ async def main():
     )
     """
 
-    """
     # ---------------------FARE DOMANDE AL CHATBOT---------------------
     messages = [
         AIMessage(content="Hello! How can I assist you today?"),
@@ -394,7 +398,7 @@ async def main():
         model_name=model_name,
     )
     print(result)
-    """
+
 
 
 if __name__ == "__main__":

@@ -124,11 +124,7 @@ def create_fulltext(driver, type):
 
 def create_vector_fulltext_indexes(uri, username, password, database):
     types = ["entities", "hybrid"]
-    embeddings, dimension = load_embedding_model()
-    if not dimension:
-        dimension = CHUNK_VECTOR_EMBEDDING_DIMENSION
-    logging.info("Starting the process of creating full-text indexes.")
-
+    _ = load_embedding_model()
     try:
         driver = get_graphDB_driver(uri, username, password, database)
         driver.verify_connectivity()
@@ -147,7 +143,7 @@ def create_vector_fulltext_indexes(uri, username, password, database):
 
     try:
         logging.info(f"Creating a vector index for type '{CHUNK_VECTOR_INDEX_NAME}'.")
-        create_vector_index(driver, CHUNK_VECTOR_INDEX_NAME, dimension)
+        create_vector_index(driver, CHUNK_VECTOR_INDEX_NAME, 1024)
         logging.info("Vector index for chunk created successfully.")
     except Exception as e:
         logging.error(f"Failed to create vector index for '{CHUNK_VECTOR_INDEX_NAME}': {e}")
@@ -178,7 +174,7 @@ def fetch_entities_for_embedding(graph):
 
 
 def update_embeddings(rows, graph):
-    embeddings, dimension = load_embedding_model()
+    embeddings = load_embedding_model()
     logging.info(f"update embedding for entities")
     for row in rows:
         row['embedding'] = embeddings.embed_query(row['text'])

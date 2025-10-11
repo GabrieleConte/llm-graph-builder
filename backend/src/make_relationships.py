@@ -8,7 +8,7 @@ import time
 from langchain_neo4j import Neo4jVector
 
 logging.basicConfig(format='%(asctime)s - %(message)s', level='INFO')
-EMBEDDING_FUNCTION, EMBEDDING_DIMENSION = load_embedding_model()
+EMBEDDING_FUNCTION = load_embedding_model()
 
 
 def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id: list):
@@ -36,7 +36,7 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
 
 
 def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
-    embeddings, dimension = EMBEDDING_FUNCTION, EMBEDDING_DIMENSION
+    embeddings, dimension = EMBEDDING_FUNCTION, 1024
     logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
     data_for_query = []
     logging.info(f"update embedding and vector index for chunks")
@@ -162,7 +162,7 @@ def create_chunk_vector_index(graph):
                                        node_label="Chunk",
                                        embedding_node_property="embedding",
                                        index_name="vector",
-                                       embedding_dimension=EMBEDDING_DIMENSION
+                                       embedding_dimension=1024
                                        )
             vector_store.create_new_index()
             logging.info(f"Index created successfully. Time taken: {time.time() - start_time:.2f} seconds")

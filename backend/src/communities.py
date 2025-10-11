@@ -345,7 +345,7 @@ def create_community_summaries(gds, model_env_value):
 
 def create_community_embeddings(gds):
     try:
-        embeddings, dimension = load_embedding_model()
+        embeddings = load_embedding_model()
         logging.info(f"Embedding model loaded successfully.")
         
         logging.info("Fetching community details.")
@@ -370,7 +370,7 @@ def create_community_embeddings(gds):
             except Exception as e:
                 logging.error(f"Failed to write embeddings to the database: {e}")
                 continue
-        return dimension
+        return 1024
     except Exception as e:
         logging.error(f"An error occurred during the community embedding process: {e}")
 
