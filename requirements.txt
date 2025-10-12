@@ -22,11 +22,3 @@ langchain-anthropic
 langchain-google-vertexai
 google-auth
 google-auth
-
-
-#TRANSITIVE
-#urllib3
-#wrapt
-#yarl
-#zipp
-#certifi
