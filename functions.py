@@ -125,6 +125,7 @@ async def extract_knowledge_graph_from_file(
         model_env_value: str = None,
         model_name: str = None,
         file_name: str = None,
+        content = None,
         allowedNodes: str = None,
         allowedRelationship: str = None,
         token_chunk_size: int = 300,
@@ -143,6 +144,10 @@ async def extract_knowledge_graph_from_file(
 
         file_name = sanitize_filename(file_name)
         merged_file_path = validate_file_path(MERGED_DIR, file_name)
+
+        with open(merged_file_path, "wb") as f:
+            f.write(content)
+
         uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database,
                                                                        model_env_value, model_name,
                                                                        merged_file_path, file_name, allowedNodes,
