@@ -313,6 +313,9 @@ async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, passwor
     elif "doc_" in file_name:
         allowedNodes = "App,Doc,Date,Time,Path"
         allowedRelationship = "Doc,SOURCE_APP,App,Doc,CREATION_DATE,Date,Doc,CREATION_TIME,Time,Doc,DATE_MODIFIED,Date,Doc,TIME_MODIFIED,Time,Doc,HAS_PATH,Path"
+    else:
+        allowedNodes = ""
+        allowedRelationship = ""
 
     start_entity_extraction = time.time()
     graph_documents = await get_graph_from_llm(model_env_value, chunkId_chunkDoc_list, allowedNodes,
