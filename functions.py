@@ -125,7 +125,7 @@ async def extract_knowledge_graph_from_file(
         model_env_value: str = None,
         model_name: str = None,
         file_name: str = None,
-        content = None,
+        content=None,
         allowedNodes: str = None,
         allowedRelationship: str = None,
         token_chunk_size: int = 300,
@@ -389,21 +389,21 @@ async def main():
     messages = [
         AIMessage(content="Hello! How can I assist you today?"),
         HumanMessage(content="Tell me info about stingray"),
-        AIMessage(content="The 1963 Chevrolet Corvette Sting Ray is a two‑door coupe produced by the American automaker Chevrolet. It features a fastback rear design, hidden headlamps, and distinctive “humps” over the fenders, along with a split‑back rear window (a design later changed for safety). In 1963 Chevrolet built about 21,000 Sting Rays. Performance specs listed in the source are a top speed of 118 mph, 0‑60 mph in 6.1 seconds, and fuel consumption of 18 mpg."),
+        AIMessage(
+            content="The 1963 Chevrolet Corvette Sting Ray is a two‑door coupe produced by the American automaker Chevrolet. It features a fastback rear design, hidden headlamps, and distinctive “humps” over the fenders, along with a split‑back rear window (a design later changed for safety). In 1963 Chevrolet built about 21,000 Sting Rays. Performance specs listed in the source are a top speed of 118 mph, 0‑60 mph in 6.1 seconds, and fuel consumption of 18 mpg."),
     ]
 
     result = await chat_bot(
-        question="is it a car from 60s?", 
+        question="is it a car from 60s?",
         history=messages,
-        uri=uri,    
-        userName=userName,  
-        password=password,  
-        database=database,  
+        uri=uri,
+        userName=userName,
+        password=password,
+        database=database,
         model_env_value=model_env_value,
         model_name=model_name,
     )
     print(result)
-
 
 
 if __name__ == "__main__":
