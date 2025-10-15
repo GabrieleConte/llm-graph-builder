@@ -1,4 +1,6 @@
 import logging
+import os
+from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_neo4j import Neo4jGraph
 from neo4j.exceptions import TransientError
@@ -6,6 +8,8 @@ from langchain_community.graphs.graph_document import GraphDocument
 from typing import List
 import time
 from pathlib import Path
+
+load_dotenv()
 
 def get_chunk_and_graphDocument(graph_document_list):
     logging.info("creating list of chunks and graph documents in get_chunk_and_graphDocument func")
@@ -25,7 +29,7 @@ def create_graph_database_connection(uri, userName, password, database):
 def load_embedding_model():
     embeddings = HuggingFaceEmbeddings(
         model_name="Qwen/Qwen3-Embedding-0.6B",
-        cache_folder="/embedding_model"
+        cache_folder=os.getenv("EMB_CACHE_DIR", "./embedding_model"),
     )
     dimension = 1024
     logging.info(f"Embedding: Using Langchain HuggingFaceEmbeddings , Dimension:{dimension}")
