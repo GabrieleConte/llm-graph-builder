@@ -1,7 +1,7 @@
 import logging
 from langchain_neo4j import Neo4jGraph
-from src.graph_query import get_graphDB_driver
-from src.shared.common_fn import load_embedding_model, execute_graph_query
+from .graph_query import get_graphDB_driver
+from .shared.common_fn import load_embedding_model, execute_graph_query
 import time
 
 DROP_INDEX_QUERY = "DROP INDEX entities IF EXISTS;"

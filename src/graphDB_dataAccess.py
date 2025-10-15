@@ -3,10 +3,10 @@ import os
 import time
 from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
-from src.shared.common_fn import delete_uploaded_local_file, load_embedding_model
-from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
-from src.source_node import sourceNode
-from src.communities import MAX_COMMUNITY_LEVELS
+from .shared.common_fn import delete_uploaded_local_file, load_embedding_model
+from .shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
+from .source_node import sourceNode
+from .communities import MAX_COMMUNITY_LEVELS
 import json
 
 

@@ -1,5 +1,5 @@
 from graph_query import *
-from src.shared.constants import *
+from .shared.constants import *
 import re
 
 def process_records(records):

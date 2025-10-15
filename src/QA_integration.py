@@ -12,9 +12,9 @@ from langchain.retrievers.document_compressors import EmbeddingsFilter, Document
 from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage
 from langchain_core.callbacks import BaseCallbackHandler
-from src.llm import get_llm
-from src.shared.common_fn import load_embedding_model
-from src.shared.constants import *
+from .llm import get_llm
+from .shared.common_fn import load_embedding_model
+from .shared.constants import *
 
 EMBEDDING_FUNCTION = load_embedding_model()
 

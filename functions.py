@@ -1,18 +1,18 @@
 from langchain_core.messages import AIMessage
 import os
-from src.main import *
-from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-from src.graphDB_dataAccess import graphDBdataAccess
+from .src.main import *
+from .src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from .src.graphDB_dataAccess import graphDBdataAccess
 from typing import Optional
-from src.response_format import create_response
-from src.QA_integration import *
-from src.shared.common_fn import *
+from .src.response_format import create_response
+from .src.QA_integration import *
+from .src.shared.common_fn import *
 import asyncio
-from src.logger import CustomLogger
+from .src.logger import CustomLogger
 from datetime import datetime, timezone
 import gc
 from langchain_neo4j import Neo4jGraph
-from src.post_processing import create_entity_embedding, create_vector_fulltext_indexes
+from .src.post_processing import create_entity_embedding, create_vector_fulltext_indexes
 
 logger = CustomLogger()
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
