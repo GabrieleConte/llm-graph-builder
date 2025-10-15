@@ -7,9 +7,8 @@ from typing import List
 import time
 from pathlib import Path
 
-def set_emb_cache_path(path):
-    global EMB_CACHE_PATH
-    EMB_CACHE_PATH = path
+class Config:
+    EMB_CACHE_PATH = None
 
 def get_chunk_and_graphDocument(graph_document_list):
     logging.info("creating list of chunks and graph documents in get_chunk_and_graphDocument func")
@@ -29,7 +28,7 @@ def create_graph_database_connection(uri, userName, password, database):
 def load_embedding_model():
     embeddings = HuggingFaceEmbeddings(
         model_name="Qwen/Qwen3-Embedding-0.6B",
-        cache_folder=EMB_CACHE_PATH
+        cache_folder=Config.EMB_CACHE_PATH
     )
     dimension = 1024
     logging.info(f"Embedding: Using Langchain HuggingFaceEmbeddings , Dimension:{dimension}")
