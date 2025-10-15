@@ -143,6 +143,10 @@ async def extract_knowledge_graph_from_file(
         graphDBdataAccess(graph)
 
         file_name = sanitize_filename(file_name)
+
+        if not os.path.exists(MERGED_DIR):
+            os.makedirs(MERGED_DIR)
+
         merged_file_path = validate_file_path(MERGED_DIR, file_name)
 
         with open(merged_file_path, "wb") as f:
