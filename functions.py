@@ -1,5 +1,4 @@
 from langchain_core.messages import AIMessage
-import os
 from .src.main import *
 from .src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from .src.graphDB_dataAccess import graphDBdataAccess
@@ -150,7 +149,7 @@ async def extract_knowledge_graph_from_file(
         merged_file_path = validate_file_path(MERGED_DIR, file_name)
 
         with open(merged_file_path, "wb") as f:
-            f.write(content)
+            f.write(content.encode("utf-8"))
 
         uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database,
                                                                        model_env_value, model_name,
@@ -307,87 +306,6 @@ async def main():
     database = "neo4j"
     model_env_value = "groq,openai/gpt-oss-120b,(...)"
     model_name = "openai/gpt-oss-120b"
-    token_chunk_size = 300
-    chunk_overlap = 20
-    chunks_to_combine = 3
-    max_token_chunk_size = 500000
-    words_for_big_file = 2000
-
-    fileName = "photo_20250616.txt"
-
-    """
-    # ---------------------ELIMINARE UN DOCUMENTO E TUTTE LE SUE ENTITA' DAL KG---------------------
-    await delete_document_and_entities(
-        uri=uri,
-        userName=userName,
-        password=password,
-        database=database,
-        fileName=fileName,
-    )
-    """
-
-    """
-    # ---------------------UPLOAD ED ESTRAZIONE KG DA FILE LOCALE---------------------
-    res = await upload_file(
-        uri=uri,
-        userName=userName,
-        password=password,
-        database=database,
-        fileName=fileName,
-        model_name=model_name,
-    )
-    
-    if res["status"] == "Success":  
-        with open(f"./temp/{fileName}", "rb") as f:
-            content = f.read()
-        
-        merged_file_path = f"./merged_files/{fileName}"
-        with open(merged_file_path, "wb") as f:
-            f.write(content)
-        
-        res = await extract_knowledge_graph_from_file(
-            file_name=fileName,
-            additional_instructions=None,
-            uri=uri,
-            userName=userName,
-            password=password,
-            database=database,
-            model_env_value=model_env_value,
-            model_name=model_name,
-            token_chunk_size=token_chunk_size,
-            chunk_overlap=chunk_overlap,
-            chunks_to_combine=chunks_to_combine,
-            max_token_chunk_size=max_token_chunk_size,
-            words_for_big_file=words_for_big_file
-        )
-        if res["status"] == "Success":
-            logging.info(f"Proceding with post-processing for file {fileName}")
-            await post_processing(
-                uri=uri,
-                userName=userName,
-                password=password,
-                database=database,
-            )
-        else:
-            logging.info(f"deleting created entities for {fileName} due to extraction failure")
-            await delete_document_and_entities(
-                fileName=fileName,
-                uri=uri,
-                userName=userName,
-                password=password,
-                database=database,
-            )
-    """
-
-    """
-    # ---------------------CALCOLARE EMBEDDINGS PER TUTTE LE ENTITA' SENZA EMBEDDINGS---------------------
-    compute_entity_embeddings(
-        uri=uri,    
-        userName=userName,  
-        password=password,  
-        database=database,  
-    )
-    """
 
     # ---------------------FARE DOMANDE AL CHATBOT---------------------
     messages = [
