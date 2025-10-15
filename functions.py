@@ -13,16 +13,12 @@ from datetime import datetime, timezone
 import gc
 from langchain_neo4j import Neo4jGraph
 from .src.post_processing import create_entity_embedding, create_vector_fulltext_indexes
-from .src.shared.common_fn import Config
 
 logger = CustomLogger()
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
 
 # ---------------------UTILITY FUNCTIONS---------------------
-def set_emb_cache_dir(cache_dir):
-    Config.EMBED_CACHE_DIR = cache_dir
-
 def sanitize_filename(filename):
     """
    Sanitize the user-provided filename to prevent directory traversal and remove unsafe characters.
