@@ -16,7 +16,7 @@ from .llm import get_llm
 from .shared.common_fn import load_embedding_model
 from .shared.constants import *
 
-EMBEDDING_FUNCTION = load_embedding_model()
+EMBEDDING_FUNCTION = load_embedding_model(emb_cache_folder)
 
 
 class CustomCallback(BaseCallbackHandler):
