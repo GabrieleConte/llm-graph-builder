@@ -149,8 +149,6 @@ async def extract_knowledge_graph_from_file(
         merged_file_path = validate_file_path(MERGED_DIR, file_name)
 
         with open(merged_file_path, "wb") as f:
-            if isinstance(content, str):
-                content = content.encode('utf-8')
             f.write(content)
 
         uri_latency, result = await extract_graph_from_file_local_file(uri, userName, password, database,
