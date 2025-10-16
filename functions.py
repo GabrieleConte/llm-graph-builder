@@ -13,6 +13,7 @@ import gc
 from langchain_neo4j import Neo4jGraph
 from .src.post_processing import create_entity_embedding, create_vector_fulltext_indexes
 
+
 logger = CustomLogger()
 MERGED_DIR = os.path.join(os.path.dirname(__file__), "merged_files")
 
