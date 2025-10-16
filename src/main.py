@@ -291,8 +291,8 @@ async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, passwor
         allowedRelationship = "Alarm,SOURCE_APP,App,Alarm,HAS_TYPE,Recurrence_Type,Alarm,HAS_LABEL,Label,Alarm,HAS_TIME,Time,Alarm,HAS_DATE,Date"
 
     elif "recurrentAlarm_" in file_name:
-        allowedNodes = "App,Alarm,Alarm_Type,Label,Repeat_Frequency,Time,Day_Of_Week,Day_Of_Month,Date"
-        allowedRelationship = "Alarm,SOURCE_APP,App,Alarm,HAS_TYPE,Alarm_Type,Alarm,HAS_LABEL,Label,Alarm,HAS_TIME,Time,Alarm,HAS_FREQUENCY,Repeat_Frequency,Alarm,SET_ON,Date,Alarm,SET_ON,Day_Of_Week,Alarm,SET_ON,Day_Of_Month"
+        allowedNodes = "App,Alarm,Recurrence_Type,Label,Repeat_Frequency,Time,Day_Of_Week,Day_Of_Month,Date"
+        allowedRelationship = "Alarm,SOURCE_APP,App,Alarm,HAS_TYPE,Recurrence_Type,Alarm,HAS_LABEL,Label,Alarm,HAS_TIME,Time,Alarm,HAS_FREQUENCY,Repeat_Frequency,Alarm,SET_ON,Date,Alarm,SET_ON,Day_Of_Week,Alarm,SET_ON,Day_Of_Month"
 
     elif "event_" in file_name:
         allowedNodes = "App,Event,Recurrence_Type,Label,Time,Date"
