@@ -57,6 +57,28 @@ def compute_entity_embeddings(
 
 
 # ---------------------KG BUILDER FUNCTIONS---------------------
+# Function to execute cypher query on KG
+async def execute_cypher_query(
+        uri: str = "bolt://localhost:7687",
+        userName: str = "neo4j",
+        password: str = "password",
+        database: str = "neo4j",
+        query: str = None,
+        params: Optional[dict] = None,
+):
+    try:
+        graph = create_graph_database_connection(uri, userName, password, database)
+        result = await asyncio.to_thread(execute_graph_query, graph, query, params, max_retries=3, delay=2)
+        return create_response('Success', data=result, message='Query executed successfully')
+
+    except Exception as e:
+        job_status = "Failed"
+        message = "Unable to execute query"
+        error_message = str(e)
+        logging.info(message)
+        logging.exception(f'Exception:{error_message}')
+        return create_response(job_status, message=message + error_message[:100], error=error_message)
+
 
 # Function to upload files
 async def upload_file(
