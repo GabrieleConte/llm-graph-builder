@@ -308,7 +308,7 @@ async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, passwor
 
     elif "photo_" in file_name:
         allowedNodes = "App,Photo,Location,Date,Time,Path"
-        allowedRelationship = "Photo,SOURCE_APP,App,Photo,CREATION_DATE,Date,Photo,CREATION_TIME,Time,Photo,TAKEN_IN,Location,Photo,HAS_PATH,Path"
+        allowedRelationship = "Photo,SOURCE_APP,App,Photo,CREATION_DATE,Date,Photo,CREATION_TIME,Time,Photo,HAS_LOCATION,Location,Photo,HAS_PATH,Path"
 
     elif "doc_" in file_name:
         allowedNodes = "App,Doc,Date,Time,Path"
