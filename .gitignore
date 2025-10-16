@@ -180,3 +180,5 @@ ollama_models
 /temp/
 /merged_files/
 /prova3/
+
+*node_modules/
