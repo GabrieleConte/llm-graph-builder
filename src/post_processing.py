@@ -155,10 +155,10 @@ def create_vector_fulltext_indexes(uri, username, password, database, embedding_
     logging.info("Full-text and vector index creation process completed.")
 
 
-def create_entity_embedding(graph: Neo4jGraph):
+def create_entity_embedding(graph: Neo4jGraph, embedding_model):
     rows = fetch_entities_for_embedding(graph)
     for i in range(0, len(rows), 1000):
-        update_embeddings(rows[i:i + 1000], graph)
+        update_embeddings(rows[i:i + 1000], graph, embedding_model)
 
 
 def fetch_entities_for_embedding(graph):

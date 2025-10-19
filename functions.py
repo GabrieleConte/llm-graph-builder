@@ -47,6 +47,7 @@ def compute_entity_embeddings(
         userName: str = "neo4j",
         password: str = "password",
         database: str = "neo4j",
+        embedding_model=None,
 ):
     """
     Computes embeddings for entities w/o one in the graph database.
@@ -54,7 +55,7 @@ def compute_entity_embeddings(
     graph = create_graph_database_connection(uri, userName, password, database)
     graphDBdataAccess(graph)
 
-    create_entity_embedding(graph)
+    create_entity_embedding(graph, embedding_model)
 
 
 # ---------------------KG BUILDER FUNCTIONS---------------------
@@ -157,7 +158,7 @@ async def extract_knowledge_graph_from_file(
         words_for_big_file: int = 2000,
         retry_condition: str = None,
         additional_instructions: Optional[str] = None,
-
+        embedding_model=None,
 ):
     try:
         start_time = time.time()
@@ -180,7 +181,8 @@ async def extract_knowledge_graph_from_file(
                                                                        allowedRelationship, token_chunk_size,
                                                                        chunk_overlap, chunks_to_combine,
                                                                        max_token_chunk_size, words_for_big_file,
-                                                                       retry_condition, additional_instructions)
+                                                                       retry_condition, additional_instructions,
+                                                                       embedding_model)
 
         extract_api_time = time.time() - start_time
 
@@ -245,6 +247,7 @@ async def post_processing(
         userName: str = "neo4j",
         password: str = "password",
         database: str = "neo4j",
+        embedding_model=None,
 ):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -259,7 +262,7 @@ async def post_processing(
         logging.info(f'Full Text index created')
 
         # materialize_entity_similarities: creates entity embeddings
-        await asyncio.to_thread(create_entity_embedding, graph)
+        await asyncio.to_thread(create_entity_embedding, graph, embedding_model)
         logging.info(f'Entity Embeddings created')
 
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -293,7 +296,7 @@ async def chat_bot(
         history=None,
         question: str = None,
         mode: str = "graph_vector_fulltext",
-        embedding_model: str = None,
+        embedding_model=None,
 ):
     logging.info(f"QA_RAG called at {datetime.now()}")
     qa_rag_start_time = time.time()
