@@ -1,6 +1,6 @@
 from langchain_neo4j import Neo4jGraph
 from langchain.docstore.document import Document
-from .shared.common_fn import load_embedding_model, execute_graph_query
+from .shared.common_fn import execute_graph_query
 import logging
 from typing import List
 import hashlib
@@ -8,7 +8,6 @@ import time
 from langchain_neo4j import Neo4jVector
 
 logging.basicConfig(format='%(asctime)s - %(message)s', level='INFO')
-EMBEDDING_FUNCTION = load_embedding_model()
 
 
 def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_documents_chunk_chunk_Id: list):
@@ -35,13 +34,12 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
         execute_graph_query(graph, unwind_query, params={"batch_data": batch_data})
 
 
-def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name):
-    embeddings, dimension = EMBEDDING_FUNCTION, 1024
-    logging.info(f'embedding model:{embeddings} and dimesion:{dimension}')
+def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name, embedding_model, embedding_dimension):
+    logging.info(f'embedding model:{embedding_model} and dimesion:{embedding_dimension}')
     data_for_query = []
     logging.info(f"update embedding and vector index for chunks")
     for row in chunkId_chunkDoc_list:
-        embeddings_arr = embeddings.embed_query(row['chunk_doc'].page_content)
+        embeddings_arr = embedding_model.embed_query(row['chunk_doc'].page_content)
         data_for_query.append({
             "chunkId": row['chunk_id'],
             "embeddings": embeddings_arr
@@ -151,18 +149,18 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document]) -> 
     return lst_chunks_including_hash
 
 
-def create_chunk_vector_index(graph):
+def create_chunk_vector_index(graph, embedding_model, embedding_dimension):
     start_time = time.time()
     try:
         vector_index_query = "SHOW INDEXES YIELD name, type, labelsOrTypes, properties WHERE name = 'vector' AND type = 'VECTOR' AND 'Chunk' IN labelsOrTypes AND 'embedding' IN properties RETURN name"
         vector_index = execute_graph_query(graph, vector_index_query)
         if not vector_index:
-            vector_store = Neo4jVector(embedding=EMBEDDING_FUNCTION,
+            vector_store = Neo4jVector(embedding=embedding_model,
                                        graph=graph,
                                        node_label="Chunk",
                                        embedding_node_property="embedding",
                                        index_name="vector",
-                                       embedding_dimension=1024
+                                       embedding_dimension=embedding_dimension
                                        )
             vector_store.create_new_index()
             logging.info(f"Index created successfully. Time taken: {time.time() - start_time:.2f} seconds")

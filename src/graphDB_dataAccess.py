@@ -3,7 +3,7 @@ import os
 import time
 from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
-from .shared.common_fn import delete_uploaded_local_file, load_embedding_model
+from .shared.common_fn import delete_uploaded_local_file
 from .shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
 from .source_node import sourceNode
 from .communities import MAX_COMMUNITY_LEVELS
@@ -203,7 +203,7 @@ class graphDBdataAccess:
             logging.error(f"An error occurred while checking GDS version: {e}")
             return False
 
-    def connection_check_and_get_vector_dimensions(self, database):
+    def connection_check_and_get_vector_dimensions(self, database, embedding_model):
         """
         Get the vector index dimension from database and application configuration and DB connection status
         
@@ -225,8 +225,8 @@ class graphDBdataAccess:
                                                     count(c.embedding) as hasEmbedding
                                 """, session_params={"database": self.graph._database})
 
-        embeddings = load_embedding_model()
-        logging.info(f'embedding model:{embeddings}')
+
+        logging.info(f'embedding model:{embedding_model}')
 
         gds_status = self.check_gds_version()
         write_access = self.check_account_access(database=database)

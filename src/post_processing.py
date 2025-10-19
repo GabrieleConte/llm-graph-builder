@@ -1,7 +1,7 @@
 import logging
 from langchain_neo4j import Neo4jGraph
 from .graph_query import get_graphDB_driver
-from .shared.common_fn import load_embedding_model, execute_graph_query
+from .shared.common_fn import execute_graph_query
 import time
 
 DROP_INDEX_QUERY = "DROP INDEX entities IF EXISTS;"
@@ -16,7 +16,6 @@ COMMUNITY_INDEX_DROP_QUERY = "DROP INDEX community_keyword IF EXISTS;"
 COMMUNITY_INDEX_FULL_TEXT_QUERY = "CREATE FULLTEXT INDEX community_keyword FOR (n:`__Community__`) ON EACH [n.summary]"
 
 CHUNK_VECTOR_INDEX_NAME = "vector"
-CHUNK_VECTOR_EMBEDDING_DIMENSION = 1024
 
 DROP_CHUNK_VECTOR_INDEX_QUERY = f"DROP INDEX {CHUNK_VECTOR_INDEX_NAME} IF EXISTS;"
 CREATE_CHUNK_VECTOR_INDEX_QUERY = """
@@ -30,7 +29,7 @@ OPTIONS {{
 """
 
 
-def create_vector_index(driver, index_type, embedding_dimension=None):
+def create_vector_index(driver, index_type, embedding_dimension):
     drop_query = ""
     query = ""
 
@@ -38,7 +37,7 @@ def create_vector_index(driver, index_type, embedding_dimension=None):
         drop_query = DROP_CHUNK_VECTOR_INDEX_QUERY
         query = CREATE_CHUNK_VECTOR_INDEX_QUERY.format(
             index_name=CHUNK_VECTOR_INDEX_NAME,
-            embedding_dimension=embedding_dimension if embedding_dimension else CHUNK_VECTOR_EMBEDDING_DIMENSION
+            embedding_dimension=embedding_dimension
         )
     else:
         logging.error(f"Invalid index type provided: {index_type}")
@@ -122,9 +121,8 @@ def create_fulltext(driver, type):
         logging.info(f"Process completed in {time.time() - start_time:.2f} seconds.")
 
 
-def create_vector_fulltext_indexes(uri, username, password, database):
+def create_vector_fulltext_indexes(uri, username, password, database, embedding_dimension):
     types = ["entities", "hybrid"]
-    _ = load_embedding_model()
     try:
         driver = get_graphDB_driver(uri, username, password, database)
         driver.verify_connectivity()
@@ -143,7 +141,7 @@ def create_vector_fulltext_indexes(uri, username, password, database):
 
     try:
         logging.info(f"Creating a vector index for type '{CHUNK_VECTOR_INDEX_NAME}'.")
-        create_vector_index(driver, CHUNK_VECTOR_INDEX_NAME, 1024)
+        create_vector_index(driver, CHUNK_VECTOR_INDEX_NAME, embedding_dimension)
         logging.info("Vector index for chunk created successfully.")
     except Exception as e:
         logging.error(f"Failed to create vector index for '{CHUNK_VECTOR_INDEX_NAME}': {e}")
@@ -173,11 +171,10 @@ def fetch_entities_for_embedding(graph):
     return [{"elementId": record["elementId"], "text": record["text"]} for record in result]
 
 
-def update_embeddings(rows, graph):
-    embeddings = load_embedding_model()
+def update_embeddings(rows, graph, embedding_model):
     logging.info(f"update embedding for entities")
     for row in rows:
-        row['embedding'] = embeddings.embed_query(row['text'])
+        row['embedding'] = embedding_model.embed_query(row['text'])
     query = """
       UNWIND $rows AS row
       MATCH (e) WHERE elementId(e) = row.elementId

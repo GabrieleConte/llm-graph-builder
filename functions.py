@@ -292,7 +292,8 @@ async def chat_bot(
         model_name: str = None,
         history=None,
         question: str = None,
-        mode: str = "graph_vector_fulltext"
+        mode: str = "graph_vector_fulltext",
+        embedding_model: str = None,
 ):
     logging.info(f"QA_RAG called at {datetime.now()}")
     qa_rag_start_time = time.time()
@@ -307,7 +308,7 @@ async def chat_bot(
 
         graphDBdataAccess(graph)
         result = await asyncio.to_thread(QA_RAG, graph=graph, model_env_value=model_env_value, model_name=model_name,
-                                         history=history, question=question, document_names=document_names, mode=mode)
+                                         history=history, question=question, document_names=document_names, mode=mode, embedding_model=embedding_model)
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Success: total Response time is  {total_call_time:.2f} seconds")
