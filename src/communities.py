@@ -440,7 +440,7 @@ def create_fulltext_index(gds, index_type):
         logging.error(f"Error details: {str(e)}")
 
 
-def create_community_properties(gds, model_env_value):
+def create_community_properties(gds, model_env_value, embedding_model, embedding_dimension):
     commands = [
         (CREATE_COMMUNITY_CONSTRAINT, "created community constraint to the graph."),
         (CREATE_COMMUNITY_LEVELS, "Successfully created community levels."),
@@ -457,7 +457,7 @@ def create_community_properties(gds, model_env_value):
         create_community_summaries(gds, model_env_value)
         logging.info("Successfully created community summaries.")
 
-        embedding_dimension = create_community_embeddings(gds)
+        embedding_dimension = create_community_embeddings(gds, embedding_model, embedding_dimension)
         logging.info("Successfully created community embeddings.")
 
         create_vector_index(gds=gds, index_type=ENTITY_VECTOR_INDEX_NAME, embedding_dimension=embedding_dimension)
@@ -491,7 +491,7 @@ def clear_communities(gds):
         raise
 
 
-def create_communities(uri, username, password, database, model=COMMUNITY_CREATION_DEFAULT_MODEL):
+def create_communities(uri, username, password, database, model=COMMUNITY_CREATION_DEFAULT_MODEL, embedding_model=None, embedding_dimension=None):
     try:
         gds = get_gds_driver(uri, username, password, database)
         clear_communities(gds)
@@ -500,7 +500,7 @@ def create_communities(uri, username, password, database, model=COMMUNITY_CREATI
         write_communities_sucess = write_communities(gds, graph_project)
         if write_communities_sucess:
             logging.info("Starting Community properties creation process.")
-            create_community_properties(gds, model)
+            create_community_properties(gds, model, embedding_model, embedding_dimension)
             logging.info("Communities creation process completed successfully.")
         else:
             logging.warning("Failed to write communities. Constraint was not applied.")

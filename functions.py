@@ -159,6 +159,7 @@ async def extract_knowledge_graph_from_file(
         retry_condition: str = None,
         additional_instructions: Optional[str] = None,
         embedding_model=None,
+        embedding_dimension: int = None,
 ):
     try:
         start_time = time.time()
@@ -182,7 +183,7 @@ async def extract_knowledge_graph_from_file(
                                                                        chunk_overlap, chunks_to_combine,
                                                                        max_token_chunk_size, words_for_big_file,
                                                                        retry_condition, additional_instructions,
-                                                                       embedding_model)
+                                                                       embedding_model, embedding_dimension)
 
         extract_api_time = time.time() - start_time
 
@@ -248,6 +249,7 @@ async def post_processing(
         password: str = "password",
         database: str = "neo4j",
         embedding_model=None,
+        embedding_dimension: int = None,
 ):
     try:
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -258,7 +260,7 @@ async def post_processing(
 
         # enable_hybrid_search_and_fulltext_search_in_bloom: creates full text index on the graph for bloom search
         await asyncio.to_thread(create_vector_fulltext_indexes, uri=uri, username=userName, password=password,
-                                database=database)
+                                database=database, embedding_dimension=embedding_dimension)
         logging.info(f'Full Text index created')
 
         # materialize_entity_similarities: creates entity embeddings

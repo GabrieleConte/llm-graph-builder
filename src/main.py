@@ -26,7 +26,7 @@ async def extract_graph_from_file_local_file(uri, userName, password, database, 
                                              merged_file_path, fileName,
                                              allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap,
                                              chunks_to_combine, max_token_chunk_size, words_for_big_file,
-                                             retry_condition, additional_instructions, embedding_model):
+                                             retry_condition, additional_instructions, embedding_model, embedding_dimension):
     logging.info(f'Process file name :{fileName}')
 
     if not retry_condition:
@@ -44,20 +44,21 @@ async def extract_graph_from_file_local_file(uri, userName, password, database, 
                                        max_token_chunk_size,
                                        True, merged_file_path=merged_file_path, retry_condition=retry_condition,
                                        additional_instructions=additional_instructions,
-                                       big_file=big_file, embedding_model=embedding_model)
+                                       big_file=big_file, embedding_model=embedding_model, embedding_dimension=embedding_dimension)
     else:
         return await processing_source(uri, userName, password, database, model_env_value, model_name, fileName, [],
                                        allowedNodes,
                                        allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine,
                                        max_token_chunk_size,
                                        True, merged_file_path=merged_file_path, retry_condition=retry_condition,
-                                       additional_instructions=additional_instructions, big_file=False, embedding_model=embedding_model)
+                                       additional_instructions=additional_instructions, big_file=False,
+                                       embedding_model=embedding_model, embedding_dimension=embedding_dimension)
 
 
 async def processing_source(uri, userName, password, database, model_env_value, model_name, file_name, pages,
                             allowedNodes, allowedRelationship, token_chunk_size, chunk_overlap, chunks_to_combine,
                             max_token_chunk_size, is_uploaded_from_local=None, merged_file_path=None, retry_condition=None,
-                            additional_instructions=None, big_file=False, embedding_model=None):
+                            additional_instructions=None, big_file=False, embedding_model=None, embedding_dimension=None):
     """
    Extracts a Neo4jGraph from a PDF file based on the model.
    
@@ -87,7 +88,7 @@ async def processing_source(uri, userName, password, database, model_env_value, 
     uri_latency["create_connection"] = f'{elapsed_create_connection:.2f}'
     graphDb_data_Access = graphDBdataAccess(graph)
 
-    create_chunk_vector_index(graph, embedding_model)
+    create_chunk_vector_index(graph, embedding_model, embedding_dimension)
 
     start_get_chunkId_chunkDoc_list = time.time()
     total_chunks, chunkId_chunkDoc_list = get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size,
@@ -411,7 +412,7 @@ def update_graph(graph):
     graph_DB_dataAccess.update_KNN_graph()
 
 
-def connection_check_and_get_vector_dimensions(graph, database):
+def connection_check_and_get_vector_dimensions(graph, database, embedding_model):
     """
   Args:
     uri: URI of the graph to extract
@@ -422,7 +423,7 @@ def connection_check_and_get_vector_dimensions(graph, database):
    Returns a status of connection from NEO4j is success or failure
  """
     graph_DB_dataAccess = graphDBdataAccess(graph)
-    return graph_DB_dataAccess.connection_check_and_get_vector_dimensions(database)
+    return graph_DB_dataAccess.connection_check_and_get_vector_dimensions(database, embedding_model)
 
 
 def upload_file_on_db(graph, model_name, fileName):
