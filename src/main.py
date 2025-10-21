@@ -173,7 +173,8 @@ async def processing_source(uri, userName, password, database, model_env_value, 
                                                                                              chunks_to_combine,
                                                                                              additional_instructions,
                                                                                              big_file=big_file,
-                                                                                             embedding_model=embedding_model
+                                                                                             embedding_model=embedding_model,
+                                                                                             embedding_dimension=embedding_dimension,
                                                                                              )
 
                     processing_chunks_end_time = time.time()
@@ -252,7 +253,7 @@ async def processing_source(uri, userName, password, database, model_env_value, 
 
 async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, password, database, file_name, model_env_value,
                             allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None,
-                            big_file=False, embedding_model=None):
+                            big_file=False, embedding_model=None, embedding_dimension=None):
     #create vector index and update chunk node with embedding
     latency_processing_chunk = {}
     if graph is not None:
@@ -262,7 +263,7 @@ async def processing_chunks(chunkId_chunkDoc_list, graph, uri, userName, passwor
         graph = create_graph_database_connection(uri, userName, password, database)
 
     start_update_embedding = time.time()
-    create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name, embedding_model)
+    create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name, embedding_model, embedding_dimension)
 
     end_update_embedding = time.time()
     elapsed_update_embedding = end_update_embedding - start_update_embedding
