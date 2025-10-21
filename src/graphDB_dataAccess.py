@@ -347,7 +347,7 @@ class graphDBdataAccess:
         logging.info(f"Deleting unconnected nodes from database")
         query = """
             MATCH (n)
-            WHERE NOT (n)--()
+            WHERE NOT (n)--() AND NOT n:User
             DELETE n
             """
         self.execute_query(query)
