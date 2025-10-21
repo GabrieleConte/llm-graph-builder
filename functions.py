@@ -325,37 +325,3 @@ async def chat_bot(
         return "Failed: unable to get chat response"
     finally:
         gc.collect()
-
-
-async def main():
-    # ENVIRONMENT VARIABLES
-    uri = "bolt://localhost:7687"
-    userName = "neo4j"
-    password = "password"
-    database = "neo4j"
-    model_env_value = "groq,openai/gpt-oss-120b,(...)"
-    model_name = "openai/gpt-oss-120b"
-
-    # ---------------------FARE DOMANDE AL CHATBOT---------------------
-    messages = [
-        AIMessage(content="Hello! How can I assist you today?"),
-        HumanMessage(content="Tell me info about stingray"),
-        AIMessage(
-            content="The 1963 Chevrolet Corvette Sting Ray is a two‑door coupe produced by the American automaker Chevrolet. It features a fastback rear design, hidden headlamps, and distinctive “humps” over the fenders, along with a split‑back rear window (a design later changed for safety). In 1963 Chevrolet built about 21,000 Sting Rays. Performance specs listed in the source are a top speed of 118 mph, 0‑60 mph in 6.1 seconds, and fuel consumption of 18 mpg."),
-    ]
-
-    result = await chat_bot(
-        question="is it a car from 60s?",
-        history=messages,
-        uri=uri,
-        userName=userName,
-        password=password,
-        database=database,
-        model_env_value=model_env_value,
-        model_name=model_name,
-    )
-    print(result)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
