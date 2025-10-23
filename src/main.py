@@ -145,7 +145,7 @@ async def processing_source(uri, userName, password, database, model_env_value, 
 
             if big_file:
                 logging.info(
-                    f"Big file with more than 2000 words, hence extracting only chunk nodes - skipping graph documents and entity extraction for file {file_name}")
+                    f"Is a big file, hence extracting only chunk nodes - skipping graph documents and entity extraction for file {file_name}")
 
             for i in range(0, len(chunkId_chunkDoc_list), update_graph_chunk_processed):
                 select_chunks_upto = i + update_graph_chunk_processed
