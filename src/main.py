@@ -1,4 +1,4 @@
-from .shared.constants import (QUERY_TO_GET_CHUNKS,
+from src.shared.constants import (QUERY_TO_GET_CHUNKS,
                                   QUERY_TO_DELETE_EXISTING_ENTITIES,
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
                                   QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
@@ -7,15 +7,15 @@ from .shared.constants import (QUERY_TO_GET_CHUNKS,
                                   DELETE_ENTITIES_AND_START_FROM_BEGINNING,
                                   QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT)
 from datetime import datetime
-from .create_chunks import CreateChunksofDocument
-from .graphDB_dataAccess import graphDBdataAccess
-from .local_file import get_documents_from_file_by_path
-from .source_node import sourceNode
-from .llm import get_graph_from_llm
-from .shared.common_fn import *
-from .make_relationships import *
+from src.create_chunks import CreateChunksofDocument
+from src.graphDB_dataAccess import graphDBdataAccess
+from src.local_file import get_documents_from_file_by_path
+from src.source_node import sourceNode
+from src.llm import get_graph_from_llm
+from src.shared.common_fn import *
+from src.make_relationships import *
 import warnings
-from .shared.llm_graph_builder_exception import LLMGraphBuilderException
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from langchain.docstore.document import Document
 
 warnings.filterwarnings("ignore")

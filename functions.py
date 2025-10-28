@@ -1,17 +1,18 @@
 from langchain_core.messages import AIMessage
-from .src.main import *
-from .src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-from .src.graphDB_dataAccess import graphDBdataAccess
+from src.main import *
+from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from src.graphDB_dataAccess import graphDBdataAccess
 from typing import Optional
-from .src.response_format import create_response
-from .src.QA_integration import *
-from .src.shared.common_fn import *
+from src.response_format import create_response
+from src.QA_integration import *
+from src.shared.common_fn import *
 import asyncio
-from .src.logger import CustomLogger
+from src.logger import CustomLogger
 from datetime import datetime, timezone
 import gc
 from langchain_neo4j import Neo4jGraph
-from .src.post_processing import create_entity_embedding, create_vector_fulltext_indexes
+from src.post_processing import create_entity_embedding, create_vector_fulltext_indexes
+from src.communities import create_communities
 
 
 logger = CustomLogger()
@@ -266,6 +267,9 @@ async def post_processing(
         # materialize_entity_similarities: creates entity embeddings
         await asyncio.to_thread(create_entity_embedding, graph, embedding_model)
         logging.info(f'Entity Embeddings created')
+
+        await asyncio.to_thread(create_communities, uri, userName, password, database)
+        logging.info(f'Communities created')
 
         graph = create_graph_database_connection(uri, userName, password, database)
         graphDb_data_Access = graphDBdataAccess(graph)

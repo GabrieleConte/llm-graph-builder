@@ -1,9 +1,10 @@
 import logging
 from graphdatascience import GraphDataScience
-from .llm import get_llm
+from src.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import os
 
 COMMUNITY_PROJECTION_NAME = "communities"
 NODE_PROJECTION = "!Chunk&!Document&!__Community__"
@@ -162,6 +163,7 @@ OPTIONS {{
 """
 
 COMMUNITY_VECTOR_INDEX_NAME = "community_vector"
+COMMUNITY_VECTOR_EMBEDDING_DIMENSION = 384
 
 DROP_COMMUNITY_VECTOR_INDEX_QUERY = f"DROP INDEX {COMMUNITY_VECTOR_INDEX_NAME} IF EXISTS;"
 CREATE_COMMUNITY_VECTOR_INDEX_QUERY = """
@@ -181,6 +183,11 @@ COMMUNITY_INDEX_FULL_TEXT_QUERY = f"CREATE FULLTEXT INDEX {COMMUNITY_FULLTEXT_IN
 
 def get_gds_driver(uri, username, password, database):
     try:
+        if all(v is None for v in [username, password]):
+            username = os.getenv('NEO4J_USERNAME')
+            database = os.getenv('NEO4J_DATABASE')
+            password = os.getenv('NEO4J_PASSWORD')
+
         gds = GraphDataScience(
             endpoint=uri,
             auth=(username, password),
@@ -234,13 +241,13 @@ def write_communities(gds, graph_project, project_name=COMMUNITY_PROJECTION_NAME
         return False
 
 
-def get_community_chain(model_env_value, is_parent=False, community_template=COMMUNITY_TEMPLATE,
+def get_community_chain(model, is_parent=False, community_template=COMMUNITY_TEMPLATE,
                         system_template=COMMUNITY_SYSTEM_TEMPLATE):
     try:
         if is_parent:
             community_template = PARENT_COMMUNITY_TEMPLATE
             system_template = PARENT_COMMUNITY_SYSTEM_TEMPLATE
-        llm, model_name = get_llm(model_env_value)
+        llm, model_name = get_llm(model)
         community_prompt = ChatPromptTemplate.from_messages(
             [
                 (

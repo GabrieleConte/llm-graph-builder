@@ -13,8 +13,8 @@ from langchain_text_splitters import TokenTextSplitter
 from langchain_core.messages import HumanMessage
 from langchain_core.callbacks import BaseCallbackHandler
 
-from .llm import get_llm
-from .shared.constants import *
+from src.llm import get_llm
+from src.shared.constants import *
 
 
 class CustomCallback(BaseCallbackHandler):
