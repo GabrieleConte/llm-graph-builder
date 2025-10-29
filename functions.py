@@ -245,7 +245,6 @@ async def extract_knowledge_graph_from_file(
 
 #Function to post-process the graph database after KG extraction
 async def post_processing(
-        model_env_value: str,
         uri: str = "bolt://localhost:7687",
         userName: str = "neo4j",
         password: str = "password",
@@ -332,6 +331,7 @@ async def chat_bot(
     finally:
         gc.collect()
 
+
 async def main():
     embedding_model, embedding_dimension = load_embedding_model()
     await post_processing(
@@ -341,7 +341,6 @@ async def main():
         database="user-1",
         embedding_model=embedding_model,
         embedding_dimension=embedding_dimension,
-        model_env_value=os.getenv("LLM_MODEL_CONFIG")
     )
 
 if __name__ == '__main__':

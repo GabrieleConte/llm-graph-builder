@@ -291,7 +291,7 @@ def process_community_info(community, chain, is_parent=False):
                 f"Summary {i + 1}: {summary}" for i, summary in enumerate(community.get("texts", [])))
         else:
             combined_text = prepare_string(community)
-            
+
         summary_response = chain.invoke({'community_info': combined_text})
         lines = summary_response.splitlines()
         title = "Untitled Community"

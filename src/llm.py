@@ -32,14 +32,11 @@ def get_llm(model_env_value: str):
             provider, model_name, _, api_key = model_env_value.split(",")
             llm = ChatGoogleGenerativeAI(
                 model=model_name,
-                google_api_key=api_key,  # Usa la chiave API diretta
+                google_api_key=api_key,
                 temperature=0,
-                # I safety settings per ChatGoogleGenerativeAI sono gestiti in modo leggermente diverso
-                # rispetto a ChatVertexAI. Potresti doverli configurare separatamente se necessari.
-                # Per default, di solito blocca contenuti pericolosi.
             )
         elif model_env_value.startswith('ollama'):
-            provider, model_name, base_url = model_env_value.split(",")
+            provider, model_name, base_url, _ = model_env_value.split(",")
             llm = ChatOllama(
                 base_url=base_url,
                 model=model_name,
@@ -47,7 +44,7 @@ def get_llm(model_env_value: str):
             )
 
         elif model_env_value.startswith('openai'):
-            provider, model_name, api_key = model_env_value.split(",")
+            provider, model_name, api_key, _ = model_env_value.split(",")
             llm = ChatOpenAI(
                     api_key=api_key,
                     model=model_name,
@@ -55,7 +52,7 @@ def get_llm(model_env_value: str):
                 )
 
         elif model_env_value.startswith('anthropic'):
-            provider, model_name, api_key = model_env_value.split(",")
+            provider, model_name, api_key, _ = model_env_value.split(",")
             llm = ChatAnthropic(
                 api_key=api_key,
                 model=model_name,
