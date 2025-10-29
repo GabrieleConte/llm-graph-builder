@@ -245,6 +245,7 @@ async def extract_knowledge_graph_from_file(
 
 #Function to post-process the graph database after KG extraction
 async def post_processing(
+        model_env_value: str,
         uri: str = "bolt://localhost:7687",
         userName: str = "neo4j",
         password: str = "password",
@@ -268,7 +269,8 @@ async def post_processing(
         await asyncio.to_thread(create_entity_embedding, graph, embedding_model)
         logging.info(f'Entity Embeddings created')
 
-        await asyncio.to_thread(create_communities, uri, userName, password, database)
+        comm_model_env_value = os.getenv("COMMUNITIES_LLM_MODEL_CONFIG")
+        await asyncio.to_thread(create_communities, uri, userName, password, database, comm_model_env_value, embedding_model, embedding_dimension)
         logging.info(f'Communities created')
 
         graph = create_graph_database_connection(uri, userName, password, database)
@@ -329,3 +331,20 @@ async def chat_bot(
         return "Failed: unable to get chat response"
     finally:
         gc.collect()
+
+async def main():
+    embedding_model, embedding_dimension = load_embedding_model()
+    await post_processing(
+        uri=os.getenv("NEO4J_URI"),
+        userName=os.getenv("NEO4J_USER"),
+        password=os.getenv("NEO4J_PASSWORD"),
+        database="user-1",
+        embedding_model=embedding_model,
+        embedding_dimension=embedding_dimension,
+        model_env_value=os.getenv("LLM_MODEL_CONFIG")
+    )
+
+if __name__ == '__main__':
+    import asyncio
+    asyncio.run(main())
+

@@ -183,11 +183,6 @@ COMMUNITY_INDEX_FULL_TEXT_QUERY = f"CREATE FULLTEXT INDEX {COMMUNITY_FULLTEXT_IN
 
 def get_gds_driver(uri, username, password, database):
     try:
-        if all(v is None for v in [username, password]):
-            username = os.getenv('NEO4J_USERNAME')
-            database = os.getenv('NEO4J_DATABASE')
-            password = os.getenv('NEO4J_PASSWORD')
-
         gds = GraphDataScience(
             endpoint=uri,
             auth=(username, password),
@@ -241,13 +236,13 @@ def write_communities(gds, graph_project, project_name=COMMUNITY_PROJECTION_NAME
         return False
 
 
-def get_community_chain(model, is_parent=False, community_template=COMMUNITY_TEMPLATE,
+def get_community_chain(model_env_value, is_parent=False, community_template=COMMUNITY_TEMPLATE,
                         system_template=COMMUNITY_SYSTEM_TEMPLATE):
     try:
         if is_parent:
             community_template = PARENT_COMMUNITY_TEMPLATE
             system_template = PARENT_COMMUNITY_SYSTEM_TEMPLATE
-        llm, model_name = get_llm(model)
+        llm, model_name = get_llm(model_env_value)
         community_prompt = ChatPromptTemplate.from_messages(
             [
                 (
@@ -296,6 +291,7 @@ def process_community_info(community, chain, is_parent=False):
                 f"Summary {i + 1}: {summary}" for i, summary in enumerate(community.get("texts", [])))
         else:
             combined_text = prepare_string(community)
+            
         summary_response = chain.invoke({'community_info': combined_text})
         lines = summary_response.splitlines()
         title = "Untitled Community"
@@ -498,7 +494,7 @@ def clear_communities(gds):
         raise
 
 
-def create_communities(uri, username, password, database, model=COMMUNITY_CREATION_DEFAULT_MODEL, embedding_model=None, embedding_dimension=None):
+def create_communities(uri, username, password, database, model_env_value, embedding_model=None, embedding_dimension=None):
     try:
         gds = get_gds_driver(uri, username, password, database)
         clear_communities(gds)
@@ -507,7 +503,7 @@ def create_communities(uri, username, password, database, model=COMMUNITY_CREATI
         write_communities_sucess = write_communities(gds, graph_project)
         if write_communities_sucess:
             logging.info("Starting Community properties creation process.")
-            create_community_properties(gds, model, embedding_model, embedding_dimension)
+            create_community_properties(gds, model_env_value, embedding_model, embedding_dimension)
             logging.info("Communities creation process completed successfully.")
         else:
             logging.warning("Failed to write communities. Constraint was not applied.")

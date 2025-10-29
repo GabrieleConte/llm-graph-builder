@@ -21,4 +21,6 @@ langchain-openai
 langchain-anthropic
 langchain-google-vertexai
 google-auth
-google-auth
+
+huggingface_hub[hf_xet]
+langchain_google_genai

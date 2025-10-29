@@ -12,7 +12,8 @@ import google.auth
 from src.shared.constants import ADDITIONAL_INSTRUCTIONS
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 import re
-
+from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 def get_llm(model_env_value: str):
     """Retrieve the specified language model based on the model name."""
@@ -28,22 +29,15 @@ def get_llm(model_env_value: str):
                 )
 
         elif model_env_value.startswith('gemini'):
-            provider, model_name = model_env_value.split(",")
-            credentials, project_id = google.auth.default()
-            llm = ChatVertexAI(
-                model_name=model_name,
-                credentials=credentials,
-                project=project_id,
+            provider, model_name, _, api_key = model_env_value.split(",")
+            llm = ChatGoogleGenerativeAI(
+                model=model_name,
+                google_api_key=api_key,  # Usa la chiave API diretta
                 temperature=0,
-                safety_settings={
-                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                },
+                # I safety settings per ChatGoogleGenerativeAI sono gestiti in modo leggermente diverso
+                # rispetto a ChatVertexAI. Potresti doverli configurare separatamente se necessari.
+                # Per default, di solito blocca contenuti pericolosi.
             )
-
         elif model_env_value.startswith('ollama'):
             provider, model_name, base_url = model_env_value.split(",")
             llm = ChatOllama(
@@ -70,13 +64,13 @@ def get_llm(model_env_value: str):
             )
 
         else:
-            provider, model_name, api_endpoint, api_key = model_env_value.split(",")
-            llm = ChatOpenAI(
-                api_key=api_key,
-                base_url=api_endpoint,
-                model=model_name,
-                temperature=0
+            provider, model_name, _, _ = model_env_value.split(",")
+            llm = HuggingFacePipeline.from_model_id(
+                model_id=model_name,
+                task="text-generation",
+                pipeline_kwargs={"temperature": 0.1, "max_new_tokens": 120},
             )
+
 
     except Exception as e:
         err = f"Error while creating LLM: {str(e)}"
