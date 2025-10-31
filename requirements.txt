@@ -21,4 +21,3 @@ langchain-openai
 langchain-anthropic
 langchain-google-vertexai
 google-auth
-google-auth
