@@ -268,7 +268,7 @@ async def post_processing(
         await asyncio.to_thread(create_entity_embedding, graph, embedding_model)
         logging.info(f'Entity Embeddings created')
 
-        comm_model_env_value = os.getenv("COMMUNITIES_LLM_MODEL_CONFIG")
+        comm_model_env_value = os.getenv("COMMUNITIES_LLM_CONFIG")
         await asyncio.to_thread(create_communities, uri, userName, password, database, comm_model_env_value, embedding_model, embedding_dimension)
         logging.info(f'Communities created')
 
