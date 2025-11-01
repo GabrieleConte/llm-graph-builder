@@ -2,6 +2,7 @@ import logging
 from langchain.docstore.document import Document
 from langchain_openai import ChatOpenAI
 from langchain_google_vertexai import ChatVertexAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
@@ -28,24 +29,15 @@ def get_llm(model_env_value: str):
                 )
 
         elif model_env_value.startswith('gemini'):
-            provider, model_name = model_env_value.split(",")
-            credentials, project_id = google.auth.default()
-            llm = ChatVertexAI(
-                model_name=model_name,
-                credentials=credentials,
-                project=project_id,
+            provider, model_name, _, api_key = model_env_value.split(",")
+            llm = ChatGoogleGenerativeAI(
+                model=model_name,
+                google_api_key=api_key,
                 temperature=0,
-                safety_settings={
-                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                },
             )
 
         elif model_env_value.startswith('ollama'):
-            provider, model_name, base_url = model_env_value.split(",")
+            provider, model_name, base_url, _ = model_env_value.split(",")
             llm = ChatOllama(
                 base_url=base_url,
                 model=model_name,
@@ -53,7 +45,7 @@ def get_llm(model_env_value: str):
             )
 
         elif model_env_value.startswith('openai'):
-            provider, model_name, api_key = model_env_value.split(",")
+            provider, model_name, api_key, _ = model_env_value.split(",")
             llm = ChatOpenAI(
                     api_key=api_key,
                     model=model_name,
@@ -61,7 +53,7 @@ def get_llm(model_env_value: str):
                 )
 
         elif model_env_value.startswith('anthropic'):
-            provider, model_name, api_key = model_env_value.split(",")
+            provider, model_name, api_key, _ = model_env_value.split(",")
             llm = ChatAnthropic(
                 api_key=api_key,
                 model=model_name,

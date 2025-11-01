@@ -1,18 +1,19 @@
 from langchain_core.messages import AIMessage
-from src.main import *
-from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-from src.graphDB_dataAccess import graphDBdataAccess
+from .src.main import extract_graph_from_file_local_file, upload_file_on_db, failed_file_process, update_graph
+from .src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from .src.graphDB_dataAccess import graphDBdataAccess
 from typing import Optional
-from src.response_format import create_response
-from src.QA_integration import *
-from src.shared.common_fn import *
+from .src.response_format import create_response
+from .src.QA_integration import *
+from .src.shared.common_fn import *
 import asyncio
-from src.logger import CustomLogger
+from .src.logger import CustomLogger
 from datetime import datetime, timezone
 import gc
 from langchain_neo4j import Neo4jGraph
-from src.post_processing import create_entity_embedding, create_vector_fulltext_indexes
-from src.communities import create_communities
+from .src.post_processing import create_entity_embedding, create_vector_fulltext_indexes
+from .src.communities import create_communities
+import os
 
 
 logger = CustomLogger()
@@ -269,6 +270,7 @@ async def post_processing(
         logging.info(f'Entity Embeddings created')
 
         comm_model_env_value = os.getenv("COMMUNITIES_LLM_CONFIG")
+        print(comm_model_env_value)
         await asyncio.to_thread(create_communities, uri, userName, password, database, comm_model_env_value, embedding_model, embedding_dimension)
         logging.info(f'Communities created')
 
