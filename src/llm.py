@@ -1,15 +1,12 @@
 import logging
 from langchain.docstore.document import Document
 from langchain_openai import ChatOpenAI
-from langchain_google_vertexai import ChatVertexAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
-from langchain_google_vertexai import HarmBlockThreshold, HarmCategory
 from langchain_experimental.graph_transformers.diffbot import DiffbotGraphTransformer
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_anthropic import ChatAnthropic
 from langchain_ollama import ChatOllama
-import google.auth
 from .shared.constants import ADDITIONAL_INSTRUCTIONS
 from .shared.llm_graph_builder_exception import LLMGraphBuilderException
 import re
