@@ -497,8 +497,8 @@ def create_communities(uri, username, password, database, model=COMMUNITY_CREATI
         clear_communities(gds)
 
         graph_project = create_community_graph_projection(gds)
-        write_communities_sucess = write_communities(gds, graph_project)
-        if write_communities_sucess:
+        write_communities_success = write_communities(gds, graph_project)
+        if write_communities_success:
             logging.info("Starting Community properties creation process.")
             create_community_properties(gds, model, embedding_model, embedding_dimension)
             logging.info("Communities creation process completed successfully.")
