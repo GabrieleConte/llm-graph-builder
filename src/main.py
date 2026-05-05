@@ -16,7 +16,7 @@ from .shared.common_fn import *
 from .make_relationships import *
 import warnings
 from .shared.llm_graph_builder_exception import LLMGraphBuilderException
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 
 warnings.filterwarnings("ignore")
 logging.basicConfig(format='%(asctime)s - %(message)s', level='INFO')

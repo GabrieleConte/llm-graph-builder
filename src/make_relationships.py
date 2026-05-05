@@ -1,5 +1,5 @@
 from langchain_neo4j import Neo4jGraph
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 from .shared.common_fn import execute_graph_query
 import logging
 from typing import List

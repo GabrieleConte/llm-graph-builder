@@ -1,5 +1,5 @@
 import logging
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
